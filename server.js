@@ -1709,8 +1709,8 @@ app.get('/', (req, res) => {
           </a>
           <span class="step secondary">Unzip in your computer</span>
           <a href="chrome://extensions/" class="step link">chrome://extensions/</a>
-          <span class="step primary">Switch to dev mode</span>
-          <span class="step primary">Load unpacked</span>
+          <a href="chrome://extensions/" class="step link">Switch to dev mode</a>
+          <a href="chrome://extensions/" class="step link">Load unpacked</a>
         </div>
       </div>
     </section>
