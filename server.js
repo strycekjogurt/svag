@@ -51,12 +51,26 @@ console.log('  - URL:', supabaseUrl ? '✅ Set' : '❌ Missing');
 console.log('  - Service Key:', supabaseServiceKey ? '✅ Set' : '❌ Missing');
 console.log('  - Anon Key:', supabaseAnonKey ? '✅ Set' : '❌ Missing');
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+// Inicializovat pouze pokud jsou credentials k dispozici
+let supabase = null;
+let supabaseAdmin = null;
+if (supabaseUrl && supabaseAnonKey && supabaseServiceKey) {
+  supabase = createClient(supabaseUrl, supabaseAnonKey);
+  supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+  console.log('✅ Supabase initialized');
+} else {
+  console.log('⚠️  Supabase not initialized - API routes will not work');
+}
 
 // Inicializace Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+let stripe = null;
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
+if (process.env.STRIPE_SECRET_KEY) {
+  stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  console.log('✅ Stripe initialized');
+} else {
+  console.log('⚠️  Stripe not initialized - payment routes will not work');
+}
 
 // Pricing konfigurace
 const PRICING = {
