@@ -1023,10 +1023,286 @@ app.get('/api/admin/stats', authenticateAdmin, async (req, res) => {
 
 // ===== HTML STRÁNKY =====
 
-// Root page - Landing page (servírováno přes static middleware výše)
-// Fallback pokud static middleware selže
+// Root page - Landing page
 app.get('/', (req, res) => {
-  res.sendFile('index.html', { root: __dirname || '.' });
+  res.send(`
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>svag - Instantly save any SVG you find</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: white;
+      color: rgba(0, 0, 0, 0.98);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 1920px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* Hero Section */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 20px 120px;
+      position: relative;
+    }
+
+    /* Iframe Demo */
+    .iframe-demo {
+      margin-bottom: 100px;
+    }
+
+    /* Content Section */
+    .hero-content {
+      text-align: center;
+      max-width: 800px;
+    }
+
+    .hero-title {
+      font-size: 72px;
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.72px;
+      margin-bottom: 36px;
+      color: rgba(0, 0, 0, 0.98);
+    }
+
+    .chrome-extension-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 80px;
+    }
+
+    .chrome-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+    }
+
+    .badge-text {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 14px;
+      line-height: 14px;
+    }
+
+    .badge-text a {
+      font-weight: 500;
+      color: rgba(0, 0, 0, 0.98);
+      text-decoration: underline;
+      text-underline-position: from-font;
+    }
+
+    .badge-text span {
+      font-weight: 400;
+      color: rgba(0, 0, 0, 0.5);
+    }
+
+    /* Installation Steps */
+    .installation-box {
+      background: white;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 32px;
+      padding: 76px;
+      max-width: 1280px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .installation-steps {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .step {
+      font-size: 14px;
+      line-height: 14px;
+      white-space: nowrap;
+    }
+
+    .step.download-btn {
+      background: #1a1a1a;
+      border: 1px solid rgba(0, 0, 0, 0.9);
+      color: rgba(255, 255, 255, 0.98);
+      font-weight: 500;
+      padding: 18px 32px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .step.download-btn:hover {
+      background: #000;
+      transform: translateY(-1px);
+    }
+
+    .step.secondary {
+      color: rgba(0, 0, 0, 0.5);
+      font-weight: 400;
+    }
+
+    .step.link {
+      color: rgba(0, 0, 0, 0.98);
+      font-weight: 500;
+      text-decoration: underline;
+      text-underline-position: from-font;
+    }
+
+    .step.primary {
+      color: rgba(0, 0, 0, 0.98);
+      font-weight: 400;
+    }
+
+    /* Responsive */
+    @media (max-width: 1400px) {
+      .hero-title {
+        font-size: 56px;
+      }
+
+      .installation-box {
+        padding: 48px;
+      }
+    }
+
+    @media (max-width: 1024px) {
+      .hero {
+        padding: 60px 20px 80px;
+      }
+
+      .hero-title {
+        font-size: 48px;
+      }
+
+      .iframe-demo {
+        margin-bottom: 60px;
+      }
+
+      .installation-box {
+        padding: 32px;
+      }
+
+      .installation-steps {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+      }
+
+      .step {
+        width: 100%;
+      }
+
+      .step.download-btn {
+        text-align: center;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .hero {
+        padding: 40px 20px 60px;
+      }
+
+      .hero-title {
+        font-size: 36px;
+        letter-spacing: -0.36px;
+      }
+
+      .iframe-demo {
+        margin-bottom: 40px;
+      }
+
+      .installation-box {
+        border-radius: 24px;
+        padding: 24px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .hero-title {
+        font-size: 28px;
+      }
+
+      .installation-box {
+        border-radius: 16px;
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section class="hero">
+      <!-- Iframe Demo -->
+      <div class="iframe-demo">
+        <iframe 
+          src="/iframe/index.html" 
+          width="360" 
+          height="360" 
+          frameborder="0"
+          title="svag Demo"
+          style="border: none; display: block;"
+        ></iframe>
+      </div>
+
+      <!-- Hero Content -->
+      <div class="hero-content">
+        <h1 class="hero-title">
+          Instantly save<br>
+          any SVG you find.
+        </h1>
+
+        <div class="chrome-extension-badge">
+          <img src="/chrome-icon.png" alt="Chrome" class="chrome-icon">
+          <div class="badge-text">
+            <a href="https://chrome.google.com/webstore" target="_blank">Chrome extension</a>
+            <span>that saves time</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Installation Steps -->
+      <div class="installation-box">
+        <div class="installation-steps">
+          <a href="/svag-chrome-extension.zip" download class="step download-btn">
+            Download svag
+          </a>
+          <span class="step secondary">Unzip in your computer</span>
+          <a href="chrome://extensions/" class="step link">chrome://extensions/</a>
+          <span class="step primary">Switch to dev mode</span>
+          <span class="step primary">Load unpacked</span>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>
+  `);
 });
 
 // Gallery Login page - Přihlašovací formulář
