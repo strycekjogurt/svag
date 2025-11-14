@@ -1,0 +1,356 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+body.success {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+body.error {
+  background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+}
+
+body.error-page {
+  background: #ffffff;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.container {
+  background: white;
+  border-radius: 16px;
+  padding: 50px 40px;
+  max-width: 520px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.icon {
+  font-size: 80px;
+  margin-bottom: 24px;
+  animation: scaleIn 0.5s ease-out 0.2s both;
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+h1 {
+  color: #1a1a1a;
+  margin-bottom: 16px;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+p {
+  color: #666;
+  margin-bottom: 24px;
+  line-height: 1.6;
+  font-size: 16px;
+}
+
+p.subtitle {
+  font-size: 14px;
+  color: #999;
+  margin-top: 24px;
+  margin-bottom: 0;
+}
+
+.token-info {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  padding: 20px;
+  border-radius: 12px;
+  margin: 24px 0;
+  word-break: break-all;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+}
+
+.token-info strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #495057;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.token-info span {
+  color: #212529;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 14px 32px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.error-details {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  color: #856404;
+  padding: 16px;
+  border-radius: 8px;
+  margin: 20px 0;
+  font-size: 14px;
+}
+
+/* Success Page Specific Styles */
+body.success-page {
+  background: white;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.success-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100vh;
+  background: white;
+}
+
+.success-content {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  width: 100%;
+  text-align: center;
+}
+
+.success-title {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 48px;
+  line-height: normal;
+  letter-spacing: 0.48px;
+  color: #070707;
+  margin: 0;
+}
+
+.success-text {
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 24px;
+  letter-spacing: 0.14px;
+  color: rgba(0, 0, 0, 0.5);
+  max-width: 318px;
+  margin: 0;
+}
+
+.success-btn {
+  background: #22f43e;
+  color: black;
+  border: none;
+  padding: 12px 48px;
+  border-radius: 12px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 18px;
+  letter-spacing: 0.16px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 54px;
+  max-width: 420px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.success-btn:hover {
+  background: #1de635;
+  transform: translateY(-1px);
+}
+
+.success-btn:active {
+  transform: translateY(0);
+}
+
+/* Error page design podle Figma */
+.error-container {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  max-width: 100%;
+  width: 100%;
+  min-height: 100vh;
+}
+
+.error-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  max-width: 420px;
+}
+
+.error-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: normal;
+  letter-spacing: 0.48px;
+  color: #070707;
+  margin: 0;
+}
+
+.error-message {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 24px;
+  letter-spacing: 0.14px;
+  color: #070707;
+  margin: 0;
+  max-width: 420px;
+}
+
+.error-description {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 24px;
+  letter-spacing: 0.14px;
+  color: rgba(0, 0, 0, 0.5);
+  margin: 0;
+  max-width: 420px;
+}
+
+.error-btn {
+  background: #e50000;
+  color: white;
+  border: none;
+  padding: 12px 48px;
+  border-radius: 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 18px;
+  letter-spacing: 0.16px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 54px;
+  max-width: 420px;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.error-btn:hover {
+  background: #cc0000;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(229, 0, 0, 0.3);
+}
+
+.error-btn:active {
+  transform: translateY(0);
+}
+
+/* Responzivita */
+@media (max-width: 480px) {
+  .container {
+    padding: 40px 24px;
+  }
+  
+  h1 {
+    font-size: 26px;
+  }
+  
+  .icon {
+    font-size: 64px;
+  }
+  
+  p {
+    font-size: 15px;
+  }
+  
+  .success-title {
+    font-size: 32px;
+  }
+  
+  .success-content {
+    padding: 24px;
+    gap: 32px;
+  }
+  
+  .error-container {
+    padding: 24px;
+  }
+  
+  .error-title {
+    font-size: 32px;
+  }
+  
+  .error-btn {
+    padding: 12px 32px;
+    width: 100%;
+  }
+}
+

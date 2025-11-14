@@ -1,0 +1,580 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --color-shadow-inner: rgba(0, 0, 0, 0.05);
+  --color-shadow-drop-30: rgba(0, 0, 0, 0.3);
+  --color-shadow-drop-20: rgba(0, 0, 0, 0.2);
+}
+
+body {
+  width: 280px;
+  max-height: 600px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #FFFFFF;
+  color: #000000;
+  overflow-y: auto;
+}
+
+.popup-container {
+  display: flex;
+  width: 280px;
+  padding: 18px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 18px;
+  background: #FFF;
+
+}
+
+/* Header */
+.header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header h1 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #000000;
+  letter-spacing: 0;
+  margin: 0;
+}
+
+.gallery-limit {
+  font-size: 14px;
+  color: #666666;
+  font-weight: 400;
+}
+
+/* Helper Text */
+.helper-text {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 14px;
+  white-space: nowrap;
+}
+
+.keyboard-key {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  background: #000000;
+  color: #FFFFFF;
+  padding: 4px;
+  border-radius: 4px;
+  font-size: 14px;
+  line-height: 14px;
+}
+
+.keyboard-key span {
+  display: inline-block;
+}
+
+.helper-label {
+  color: rgba(0, 0, 0, 0.5);
+  font-size: 14px;
+  line-height: 14px;
+}
+
+/* Preview Editor Box */
+.preview-editor {
+  height: 220px;
+  align-self: stretch;
+  border-radius: 18px;
+  background: #D4D4D4;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+
+.preview-content {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+}
+
+.preview-cursor {
+  position: absolute;
+  left: 50%;
+  top: 25%;
+  transform: translate(-50%, 0%);
+  z-index: 1;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+.preview-actions-container {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  z-index: 10;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.preview-actions {
+  display: flex;
+  gap: 8px;
+  position: relative;
+  z-index: 2;
+}
+
+.preview-actions.switching .action-btn {
+  will-change: transform;
+}
+
+.action-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid #000000;
+  background: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.action-btn:hover {
+  transform: scale(1.05);
+}
+
+.action-btn svg {
+  pointer-events: none;
+}
+
+/* White scheme (default) */
+.preview-editor[data-scheme="white-black"] .action-btn {
+  background: #FFFFFF;
+  border-color: #000000;
+}
+
+.preview-editor[data-scheme="white-black"] .action-btn[data-action="download"] svg {
+  stroke: #000000;
+}
+
+.preview-editor[data-scheme="white-black"] .action-btn[data-action="gallery"] svg {
+  stroke: #000000;
+}
+
+.preview-editor[data-scheme="white-black"] .action-btn[data-action="gallery"] svg path {
+  fill: none;
+  stroke: #000000;
+}
+
+/* Black scheme - only action buttons */
+.preview-editor[data-scheme="black-white"] .action-btn {
+  background: #000000;
+  border-color: #FFFFFF;
+}
+
+.preview-editor[data-scheme="black-white"] .action-btn[data-action="download"] svg,
+.preview-editor[data-scheme="black-white"] .action-btn[data-action="download"] svg path {
+  fill: #000000 !important;
+  stroke: #FFFFFF !important;
+}
+
+.preview-editor[data-scheme="black-white"] .action-btn[data-action="gallery"] svg {
+  stroke: #FFFFFF;
+}
+
+.preview-editor[data-scheme="black-white"] .action-btn[data-action="gallery"] svg path {
+  fill: none;
+  stroke: #FFFFFF;
+}
+
+.preview-editor[data-scheme="black-white"] .preview-cursor svg path {
+  stroke: #FFFFFF;
+}
+
+.preview-editor[data-scheme="black-white"] .switch-btn {
+  background: #000000;
+}
+
+.preview-editor[data-scheme="black-white"] .switch-btn svg path {
+  stroke: #FFFFFF;
+}
+
+.preview-editor[data-scheme="black-white"] .switch-btn:hover {
+  background: #333333;
+}
+
+/* Switch Button */
+.switch-btn {
+  display: inline-flex;
+  padding: 6px;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  background: #000;
+  border: none;
+  cursor: pointer;
+  z-index: 11;
+  transition: all 0.2s;
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+}
+
+.switch-btn:hover {
+  transform: scale(1.05);
+  background: #333;
+}
+
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: scale(0.8); 
+  }
+  to { 
+    opacity: 1; 
+    transform: scale(1); 
+  }
+}
+
+/* Color Scheme Buttons */
+.color-scheme-buttons {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  display: flex;
+  gap: 8px;
+  z-index: 4;
+}
+
+.color-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.2s;
+}
+
+.color-btn:hover {
+  transform: scale(1);
+}
+
+.color-btn.active {
+  outline: 2px solid #0066FF;
+  outline-offset: 2px;
+}
+
+.color-circle {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid #000000;
+}
+
+.color-circle.white {
+  background: #FFFFFF;
+}
+
+.color-circle.black {
+  background: #000000;
+}
+
+/* Gallery Section */
+.gallery-section {
+  width: 100%;
+}
+
+.gallery-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.gallery-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #000000;
+}
+
+.resend-link {
+  font-size: 14px;
+  color: #666666;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.resend-link:hover {
+  color: #000000;
+  text-decoration: underline;
+}
+
+/* Auth Form */
+.gallery-content {
+  width: 100%;
+}
+
+.auth-form {
+  width: 100%;
+}
+
+.auth-step {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.email-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #E0E0E0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  background: #FFFFFF;
+  color: #000000;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.email-input::placeholder {
+  color: #999999;
+  font-weight: 300;
+}
+
+.email-input:focus {
+  outline: none;
+  border-color: #000000;
+}
+
+/* Code Inputs */
+.code-inputs-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* nebo space-between */
+  gap: 4px; /* Stejná mezera mezi všemi prvky */
+  align-self: stretch;
+  width: 100%;
+}
+
+.code-digit {
+  display: flex;
+  height: 42px;
+  width: 100%; /* Fixní šířka - každé pole má stejnou velikost */
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  border-radius: 12px;
+  border: 2px solid #000;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+
+.code-hint {
+  font-size: 13px;
+  color: #666666;
+  text-align: center;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.auth-info {
+  font-size: 13px;
+  color: #000000;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.auth-hint {
+  font-size: 12px;
+  color: #666666;
+  text-align: center;
+  margin-top: 8px;
+}
+
+/* Buttons */
+.btn {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #000000;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #ffffff;
+  color: #000000;
+  font-family: inherit;
+}
+
+.btn-primary {
+  background: #000000;
+  color: #FFFFFF;
+  border: none;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #333333;
+}
+
+.btn-primary:disabled {
+  background: #CCCCCC;
+  color: #666666;
+  cursor: not-allowed;
+}
+
+.btn-primary.error {
+  background: #CCCCCC;
+  color: #000000;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #ffffff;
+  color: #000000;
+  border-color: #000000;
+}
+
+.btn-secondary:hover {
+  background: #f0f0f0;
+}
+
+/* Logged In State */
+.logged-in {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.gallery-icons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.gallery-btn {
+  width: 42px;
+  height: 42px;
+  background: #000000;
+  border: none;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.gallery-btn:hover {
+  background: #121212;
+}
+
+.icons-list {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.icon-item {
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #FFFFFF;
+  padding: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.icon-item:hover {
+  background:#F0F0F0 ;
+}
+
+.icon-item svg {
+  width: auto;
+  height: auto;
+  max-width: 32px;
+  max-height: 32px;
+  display: block;
+}
+
+.icon-item.empty {
+  border-style: dashed;
+  border-color: #CCCCCC;
+  background: #FAFAFA;
+  cursor: default;
+}
+
+.icon-item.empty:hover {
+  background: #FAFAFA;
+}
+
+.icon-item.more {
+  color: rgba(0, 0, 0, 0.50);
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+}
+
+.icon-item.more:hover {
+  background: #F5F5F5;
+  color: #000000;
+}
+
+/* User Footer */
+.user-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid #E0E0E0;
+}
+
+.user-email {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.50);
+}
+
+.logout-btn {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.50);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: none;
+  transition: color 0.2s;
+  font-family: inherit;
+}
+
+.logout-btn:hover {
+  color: #000000;
+}

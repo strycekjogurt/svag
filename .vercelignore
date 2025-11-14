@@ -1,0 +1,46 @@
+# Files to ignore during Vercel deployment
+
+# Development
+node_modules/
+.env
+.env.local
+*.log
+
+# Extension files (not needed on server)
+popup.html
+popup.js
+popup.css
+content.js
+content.css
+background.js
+config.js
+icons/
+
+# Documentation
+README.md
+SETUP.md
+DEPLOYMENT-GUIDE.md
+QUICK-START.md
+public-deployment.plan.md
+
+# Build files
+svag-extension.zip
+build-extension.sh
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Examples
+server-example.js
+backend-package.json
+BACKEND-README.md
+

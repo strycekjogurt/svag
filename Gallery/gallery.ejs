@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SVG Gallery - svag</title>
+  <script src="https://js.stripe.com/v3/"></script>
+  <link rel="stylesheet" href="/Gallery/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="gallerySection">
+    <!-- Header -->
+    <header class="header">
+      <h1 class="logo">svag</h1>
+      <div class="header-right">
+        <span class="usage-count" id="usageStats">5/100</span>
+        <span class="user-email" id="userEmail">user@example.com</span>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+      </div>
+    </header>
+    
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <button class="filter-btn active" data-sort="newest" onclick="sortGallery('newest')">Newest</button>
+      <button class="filter-btn" data-sort="oldest" onclick="sortGallery('oldest')">Oldest</button>
+      <button class="filter-btn" data-sort="a-z" onclick="sortGallery('a-z')">From A to Z</button>
+      <button class="filter-btn" data-sort="z-a" onclick="sortGallery('z-a')">From Z to A</button>
+      <button class="filter-btn" data-sort="largest" onclick="sortGallery('largest')">Largest</button>
+      <button class="filter-btn" data-sort="smallest" onclick="sortGallery('smallest')">Smallest</button>
+    </div>
+    
+    <!-- Gallery Grid -->
+    <div class="gallery-container">
+      <div class="gallery" id="gallery"></div>
+      
+      <!-- Empty State -->
+      <div id="emptyState" class="empty-state" style="display: none;">
+        <h2>Nothing here yet</h2>
+        <p>Use the Chrome extension to add SVG icons to your gallery</p>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Inject Stripe key from server
+    const STRIPE_KEY = '<%= stripeKey %>';
+  </script>
+  <script src="/Gallery/script.js"></script>
+</body>
+</html>
+
