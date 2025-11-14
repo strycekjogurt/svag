@@ -14,18 +14,34 @@ content.js
 content.css
 background.js
 config.js
-icons/
+manifest.json
+svag-chrome-extension/
+
+# Extension icons (but keep chrome-icon.png for landing page)
+icons/icon16.png
+icons/icon48.png
+icons/icon128.png
+icons/README.md
 
 # Documentation
 README.md
 SETUP.md
 DEPLOYMENT-GUIDE.md
 QUICK-START.md
-public-deployment.plan.md
+LANDING-PAGE.md
+PRODUCTION-READY.md
+CREDENTIALS-CHECKLIST.md
+TESTING-SYNC.md
+SYNC.md
+BACKEND-README.md
 
 # Build files
 svag-extension.zip
+svag.zip
 build-extension.sh
+build-crx.sh
+build-crx.js
+create-installable-extension.sh
 
 # Git
 .git/
@@ -42,5 +58,5 @@ Thumbs.db
 # Examples
 server-example.js
 backend-package.json
-BACKEND-README.md
+server.js.backup
 
