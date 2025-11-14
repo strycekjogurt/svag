@@ -1661,12 +1661,7 @@ app.get('/', (req, res) => {
 
       <!-- Hero Content -->
       <div class="hero-content">
-        <h1 class="hero-title">
-          Instantly save<br>
-          any SVG you find.
-        </h1>
-
-        <div class="chrome-extension-badge">
+       <div class="chrome-extension-badge">
           <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" class="chrome-icon">
             <g clip-path="url(#clip0_29_189)">
               <path d="M14 20.9971C17.866 20.9971 21 17.8631 21 13.9971C21 10.1311 17.866 6.99707 14 6.99707C10.134 6.99707 7 10.1311 7 13.9971C7 17.8631 10.134 20.9971 14 20.9971Z" fill="white"/>
@@ -1698,6 +1693,12 @@ app.get('/', (req, res) => {
             <span>that saves time</span>
           </div>
         </div>
+        <h1 class="hero-title">
+          Instantly save<br>
+          any SVG you find.
+        </h1>
+
+       
       </div>
 
       <!-- Installation Steps -->
