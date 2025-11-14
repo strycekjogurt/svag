@@ -1689,7 +1689,7 @@ app.get('/', (req, res) => {
             </defs>
           </svg>
           <div class="badge-text">
-            <a href="https://chrome.google.com/webstore" target="_blank">Chrome extension</a>
+            <a href="#" onclick="openChromeExtensions(); return false;">Chrome extension</a>
             <span>that saves time</span>
           </div>
         </div>
@@ -1708,13 +1708,37 @@ app.get('/', (req, res) => {
             Download svag
           </a>
           <span class="step secondary">Unzip in your computer</span>
-          <a href="chrome://extensions/" class="step link">chrome://extensions/</a>
-          <a href="chrome://extensions/" class="step link">Switch to dev mode</a>
-          <a href="chrome://extensions/" class="step link">Load unpacked</a>
+          <a href="#" onclick="openChromeExtensions(); return false;" class="step link">chrome://extensions/</a>
+          <a href="#" onclick="openChromeExtensions(); return false;" class="step link">Switch to dev mode</a>
+          <a href="#" onclick="openChromeExtensions(); return false;" class="step link">Load unpacked</a>
         </div>
       </div>
     </section>
   </div>
+  <script>
+    function openChromeExtensions() {
+      try {
+        // Zkusit otevřít chrome://extensions/ přímo
+        window.location.href = 'chrome://extensions/';
+      } catch(e) {
+        // Pokud to nefunguje, zkusit přes window.open
+        try {
+          window.open('chrome://extensions/', '_blank');
+        } catch(e2) {
+          // Fallback - zkopírovat URL do schránky
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText('chrome://extensions/').then(() => {
+              alert('URL zkopírována do schránky! Vlož ji do Chrome adresního řádku.');
+            }).catch(() => {
+              prompt('Zkopíruj tuto URL do Chrome adresního řádku:', 'chrome://extensions/');
+            });
+          } else {
+            prompt('Zkopíruj tuto URL do Chrome adresního řádku:', 'chrome://extensions/');
+          }
+        }
+      }
+    }
+  </script>
 </body>
 </html>
   `);
