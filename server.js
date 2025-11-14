@@ -1258,17 +1258,406 @@ app.get('/', (req, res) => {
 <body>
   <div class="container">
     <section class="hero">
-      <!-- Iframe Demo -->
+      <!-- Iframe Demo - Inline -->
       <div class="iframe-demo">
-        <iframe 
-          src="/iframe/index.html" 
-          width="360" 
-          height="360" 
-          frameborder="0"
-          title="svag Demo"
-          style="border: none; display: block;"
-        ></iframe>
+        <div id="svag-demo-container" style="width: 360px; height: 360px; background: white; border: 1px solid rgba(0, 0, 0, 0.12); border-radius: 16px; position: relative; overflow: hidden; box-shadow: 1px 1px 24px 0px inset rgba(0, 0, 0, 0.1);">
+          <div style="position: absolute; left: 12px; top: 12px; display: flex; align-items: center; gap: 8px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 400; line-height: 14px; white-space: nowrap; z-index: 10;">
+            <div style="background: black; color: rgba(255, 255, 255, 0.9); padding: 4px; border-radius: 4px; display: flex; align-items: center; gap: 1px;">
+              <span>⌘</span><span>cmd</span>
+            </div>
+            <span style="color: rgba(0, 0, 0, 0.5);">and hover over the logo</span>
+          </div>
+          <div class="logo-container" style="position: absolute; left: 118px; top: 118px; width: 124px; height: 124px; cursor: pointer;">
+            <svg data-icon="svag" preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 124 124" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <g id="svag.svg">
+                <path d="M124 62C124 96.2417 96.2417 124 62 124C27.7583 124 0 96.2417 0 62C0 27.7583 27.7583 0 62 0C96.2417 0 124 27.7583 124 62Z" fill="white"/>
+                <path d="M120.648 62C120.648 29.6092 94.3908 3.35156 62 3.35156C29.6092 3.35156 3.35156 29.6092 3.35156 62C3.35156 94.3908 29.6092 120.648 62 120.648V124C27.7583 124 0 96.2417 0 62C0 27.7583 27.7583 0 62 0C96.2417 0 124 27.7583 124 62C124 96.2417 96.2417 124 62 124V120.648C94.3908 120.648 120.648 94.3908 120.648 62Z" fill="black"/>
+                <path d="M76.6279 58.125C78.5162 58.125 80.0976 58.4464 81.3711 59.0898C82.6444 59.7186 83.6686 60.5086 84.4443 61.459C85.2347 62.3948 85.8431 63.316 86.2676 64.2227H86.6182V58.5635H95.9062V92.5859C95.9062 95.4522 95.2041 97.8509 93.7988 99.7812C92.3936 101.711 90.4463 103.159 87.958 104.124C85.4843 105.104 82.6372 105.594 79.417 105.594C76.3871 105.594 73.7884 105.177 71.6221 104.344C69.4703 103.525 67.7569 102.406 66.4834 100.987C65.21 99.5688 64.3835 97.9745 64.0029 96.2051L72.6533 95.043C72.9168 95.7155 73.3345 96.3439 73.9053 96.9287C74.4762 97.5137 75.2302 97.982 76.167 98.333C77.1184 98.6986 78.2746 98.8818 79.6357 98.8818C81.6704 98.8818 83.3466 98.384 84.6641 97.3896C85.9961 96.4099 86.6621 94.7647 86.6621 92.4541V86.29H86.2676C85.8577 87.2259 85.2425 88.1108 84.4229 88.9443C83.6031 89.7779 82.5489 90.4579 81.2607 90.9844C79.9727 91.5108 78.436 91.7744 76.6504 91.7744C74.118 91.7744 71.812 91.1894 69.7334 90.0195C67.6695 88.835 66.0226 87.029 64.793 84.6016C63.578 82.1594 62.9707 79.0737 62.9707 75.3447C62.9707 71.5279 63.5927 68.3394 64.8369 65.7803C66.0811 63.2212 67.7359 61.3054 69.7998 60.0332C71.8783 58.7611 74.1543 58.125 76.6279 58.125ZM42.0312 59.0938C43.9049 59.0938 45.6985 59.3132 47.4111 59.752C49.1382 60.1907 50.6681 60.8708 52 61.792C53.3466 62.7133 54.4078 63.8981 55.1836 65.3457C55.9593 66.7787 56.3466 68.4968 56.3467 70.5V93.2256H47.4766V88.5537H47.2129C46.6713 89.6065 45.9465 90.5347 45.0391 91.3389C44.1315 92.1286 43.0411 92.7508 41.7676 93.2041C40.4942 93.6427 39.0231 93.8613 37.3545 93.8613C35.2027 93.8613 33.2849 93.489 31.6016 92.7432C29.9182 91.9827 28.5862 90.8637 27.6055 89.3867C26.6394 87.8952 26.1563 86.0381 26.1562 83.8154C26.1562 81.9436 26.5005 80.3709 27.1885 79.0986C27.8764 77.8266 28.8135 76.8033 29.999 76.0283C31.1847 75.2533 32.5314 74.6683 34.0391 74.2734C35.5613 73.8786 37.1566 73.6003 38.8252 73.4395C40.7867 73.2347 42.368 73.0446 43.5684 72.8691C44.7682 72.6791 45.6391 72.4016 46.1807 72.0361C46.7223 71.6705 46.9932 71.1287 46.9932 70.4121V70.2812C46.9932 68.892 46.5541 67.8171 45.6758 67.0566C44.8121 66.2962 43.5828 65.916 41.9873 65.916C40.3039 65.916 38.9641 66.2884 37.9688 67.0342C36.9734 67.7654 36.3152 68.6875 35.9932 69.7988L27.3418 69.0967C27.7809 67.0494 28.6446 65.2797 29.9326 63.7881C31.2207 62.2819 32.8824 61.1266 34.917 60.3223C36.9663 59.5033 39.3379 59.0938 42.0312 59.0938ZM47.0596 77.6074C46.7668 77.7975 46.3639 77.9729 45.8516 78.1338C45.3539 78.28 44.7905 78.4192 44.1611 78.5508C43.5317 78.6678 42.9019 78.7775 42.2725 78.8799C41.6431 78.9676 41.0718 79.048 40.5596 79.1211C39.4619 79.282 38.5032 79.5378 37.6836 79.8887C36.8639 80.2396 36.2272 80.7149 35.7734 81.3145C35.3197 81.8993 35.0928 82.6305 35.0928 83.5078C35.0928 84.78 35.5535 85.7531 36.4756 86.4258C37.4124 87.0839 38.5987 87.4131 40.0332 87.4131C41.4091 87.4131 42.6238 87.1417 43.6777 86.6006C44.7317 86.0449 45.559 85.2992 46.1592 84.3633C46.7592 83.4274 47.0596 82.367 47.0596 81.1826V77.6074ZM79.6143 65.5615C78.0773 65.5615 76.7815 65.978 75.7275 66.8115C74.6737 67.6304 73.8756 68.7711 73.334 70.2334C72.7924 71.6958 72.5225 73.3851 72.5225 75.3008C72.5225 77.2456 72.7925 78.9273 73.334 80.3457C73.8902 81.7495 74.6883 82.8392 75.7275 83.6143C76.7815 84.3747 78.0773 84.7549 79.6143 84.7549C81.1219 84.7549 82.3953 84.3815 83.4346 83.6357C84.4884 82.8753 85.2934 81.7934 85.8496 80.3896C86.4205 78.9712 86.706 77.2749 86.7061 75.3008C86.7061 73.3267 86.4282 71.6157 85.8721 70.168C85.3159 68.7057 84.5109 67.5719 83.457 66.7676C82.4031 65.9633 81.1219 65.5615 79.6143 65.5615ZM42.2168 24.2188C46.4477 24.2188 49.7771 25.1207 52.2051 26.9238C54.6476 28.7269 56.0724 31.1823 56.4795 34.29L47.9746 34.8174C47.8292 34.0845 47.5159 33.4252 47.0361 32.8389C46.5563 32.2378 45.9238 31.761 45.1387 31.4092C44.3682 31.0428 43.4449 30.8594 42.3691 30.8594C40.9299 30.8594 39.7161 31.1676 38.7275 31.7832C37.7389 32.3842 37.2441 33.1906 37.2441 34.2021C37.2442 35.0083 37.5644 35.6901 38.2041 36.2471C38.8439 36.804 39.9416 37.2508 41.4971 37.5879L47.5596 38.8193C50.8163 39.4937 53.2444 40.579 54.8438 42.0742C56.443 43.5694 57.2431 45.5335 57.2432 47.9668C57.2432 50.1803 56.5957 52.1228 55.3018 53.7939C54.0224 55.4651 52.2633 56.7698 50.0244 57.708C47.8 58.6315 45.2338 59.0937 42.3262 59.0938C37.8917 59.0938 34.3582 58.1625 31.7266 56.3008C29.1096 54.4244 27.5757 51.8734 27.125 48.6484L36.2627 48.165C36.5389 49.5284 37.2082 50.5688 38.2695 51.2871C39.3309 51.9908 40.6902 52.3428 42.3477 52.3428C43.976 52.3428 45.2848 52.0278 46.2734 51.3975C47.2764 50.7525 47.7851 49.9243 47.7998 48.9131C47.7853 48.0628 47.4293 47.3656 46.7314 46.8232C46.0336 46.2662 44.9568 45.842 43.5029 45.5488L37.7021 44.3828C34.4309 43.7231 31.9958 42.5793 30.3965 40.9521C28.8118 39.325 28.0195 37.2509 28.0195 34.7295C28.0196 32.5599 28.6006 30.6906 29.7637 29.1221C30.9413 27.5535 32.5922 26.3444 34.7148 25.4941C36.852 24.644 39.3527 24.2188 42.2168 24.2188ZM77.8174 48.8252H78.167L85.1016 24.6582H94.9375L83.3125 58.125H72.8447L61.0469 24.6582H70.8604L77.8174 48.8252Z" fill="#070707"/>
+              </g>
+            </svg>
+          </div>
+        </div>
       </div>
+      <style id="svag-demo-styles">
+        /* Popup s akcemi */
+        #svag-action-popup {
+          position: fixed;
+          display: none;
+          background: transparent;
+          z-index: 2147483647 !important;
+          opacity: 0;
+          transform: translateY(0) scale(1);
+          transition: none;
+          gap: 8px;
+          align-items: center;
+          isolation: isolate;
+          pointer-events: auto;
+        }
+        #svag-action-popup.svag-visible {
+          opacity: 1;
+          display: flex;
+          animation: popup-appear 0.15s ease-out forwards;
+        }
+        @keyframes popup-appear {
+          0% { opacity: 0; transform: translateY(10px) scale(0.95); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        :root {
+          --svag-bg: #ffffff;
+          --svag-border: #000000;
+          --svag-icon: #000000;
+        }
+        .svag-action-item {
+          width: 42px;
+          height: 42px;
+          border-radius: 50%;
+          background: var(--svag-bg);
+          border: 2px solid var(--svag-border);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          position: relative;
+          overflow: hidden;
+          --fill-percent: 0;
+          z-index: 2147483647;
+          isolation: isolate;
+          opacity: 0;
+          transform: translateY(8px) scale(0.95);
+        }
+        .svag-visible .svag-action-item:first-child {
+          animation: button-fan-left 0.19s ease-out 0.04s forwards;
+        }
+        .svag-visible .svag-action-item:last-child {
+          animation: button-fan-right 0.19s ease-out 0.06s forwards;
+        }
+        @keyframes button-fan-left {
+          0% { opacity: 0; transform: translateY(8px) translateX(-4px) scale(0.95); }
+          100% { opacity: 1; transform: translateY(0) translateX(0) scale(1); }
+        }
+        @keyframes button-fan-right {
+          0% { opacity: 0; transform: translateY(8px) translateX(4px) scale(0.95); }
+          100% { opacity: 1; transform: translateY(0) translateX(0) scale(1); }
+        }
+        .svag-action-item::before {
+          content: '';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 200%;
+          height: 200%;
+          background: var(--svag-border);
+          border-radius: 50%;
+          transform: translate(-50%, -50%) scale(var(--fill-percent));
+          transition: transform 0.15s ease-out;
+          z-index: 0;
+        }
+        .svag-action-icon {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+          z-index: 1;
+        }
+        .svag-action-icon svg {
+          display: block;
+          position: relative;
+          z-index: 1;
+        }
+        .svag-action-item svg path {
+          stroke: var(--svag-icon);
+          transition: stroke 0.15s ease-out;
+        }
+        .svag-action-item.svag-filled svg path {
+          stroke: var(--svag-bg);
+        }
+        .svag-action-item svg path[fill] {
+          fill: var(--svag-bg);
+          transition: fill 0.15s ease-out;
+        }
+        .svag-action-item.svag-filled svg path[fill] {
+          fill: var(--svag-bg);
+        }
+        .svag-notification {
+          position: fixed;
+          bottom: 30px;
+          right: 30px;
+          background: #000000;
+          color: #ffffff;
+          padding: 4px 8px;
+          border-radius: 6px;
+          font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+          font-size: 11px;
+          font-weight: 400;
+          letter-spacing: 0.8px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+          z-index: 2147483646;
+          opacity: 0;
+          transform: translateY(10px) scale(0.95);
+          transition: all 0.15s ease;
+          white-space: nowrap;
+          overflow: hidden;
+          isolation: isolate;
+        }
+        .svag-notification::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.15) 50%, transparent 100%);
+          animation: skeleton-loading 1500ms ease-in-out forwards;
+          z-index: 0;
+          border-radius: 4px;
+        }
+        @keyframes skeleton-loading {
+          0% { left: -100%; }
+          100% { left: 100%; }
+        }
+        .svag-notification.svag-visible {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+        .svag-notification.svag-hiding {
+          opacity: 0;
+          transform: translateY(-10px) scale(0.7);
+          transition: all 0.2s ease;
+        }
+      </style>
+      <script>
+        (function() {
+          let isCommandPressed = false;
+          let currentHoveredSvg = null;
+          let previewOverlay = null;
+          let popupVisible = false;
+          let popupPosition = { x: 0, y: 0 };
+          
+          function applyColorScheme() {
+            const root = document.documentElement;
+            root.style.setProperty('--svag-bg', '#ffffff');
+            root.style.setProperty('--svag-border', '#000000');
+            root.style.setProperty('--svag-icon', '#000000');
+          }
+          
+          function createActionPopup() {
+            const popup = document.createElement('div');
+            popup.id = 'svag-action-popup';
+            popup.innerHTML = '<div class="svag-action-item" data-action="gallery"><span class="svag-action-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="19" viewBox="0 0 16 19" fill="none"><path d="M11 1H5C2.79086 1 1 2.79086 1 5V17L7.41876 12.4152C7.76646 12.1668 8.23354 12.1668 8.58124 12.4152L15 17V5C15 2.79086 13.2091 1 11 1Z" fill="var(--svag-bg)" stroke="var(--svag-border)" stroke-width="2"/></svg></span></div><div class="svag-action-item" data-action="download"><span class="svag-action-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="16" viewBox="0 0 14 16" fill="none"><path d="M6.67572 0V14.5M6.67572 14.5L12.6757 9M6.67572 14.5L0.67572 9" stroke="var(--svag-icon)" stroke-width="2"/></svg></span></div>';
+            document.body.appendChild(popup);
+            applyColorScheme();
+            let animationFrameId = null;
+            const updateProximityEffect = (e) => {
+              if (animationFrameId) cancelAnimationFrame(animationFrameId);
+              animationFrameId = requestAnimationFrame(() => {
+                const buttons = popup.querySelectorAll('.svag-action-item');
+                buttons.forEach(button => {
+                  const rect = button.getBoundingClientRect();
+                  const centerX = rect.left + rect.width / 2;
+                  const centerY = rect.top + rect.height / 2;
+                  const deltaX = e.clientX - centerX;
+                  const deltaY = e.clientY - centerY;
+                  const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                  const maxDistance = 24;
+                  const fillPercent = Math.max(0, Math.min(1, 1 - (distance / maxDistance)));
+                  button.style.setProperty('--fill-percent', fillPercent);
+                  if (fillPercent > 0.4) button.classList.add('svag-filled');
+                  else button.classList.remove('svag-filled');
+                });
+              });
+            };
+            const mouseMoveHandler = (e) => {
+              if (popup.classList.contains('svag-visible')) updateProximityEffect(e);
+            };
+            document.addEventListener('mousemove', mouseMoveHandler);
+            const galleryBtn = popup.querySelector('[data-action="gallery"]');
+            if (galleryBtn) {
+              galleryBtn.addEventListener('mouseenter', () => {
+                if (currentHoveredSvg) {
+                  showNotification('Added to gallery', popupPosition);
+                  hideActionPopup();
+                }
+              });
+            }
+            const downloadBtn = popup.querySelector('[data-action="download"]');
+            if (downloadBtn) {
+              downloadBtn.addEventListener('mouseenter', () => {
+                if (currentHoveredSvg) {
+                  downloadSvg(currentHoveredSvg);
+                  hideActionPopup();
+                }
+              });
+            }
+            return popup;
+          }
+          
+          function getSvgData(element) {
+            if (element.tagName.toLowerCase() === 'svg') {
+              return { type: 'inline', content: element.outerHTML, element: element };
+            }
+            return null;
+          }
+          
+          function isSvgElement(element) {
+            if (!element || !element.tagName) return false;
+            const tagName = element.tagName.toLowerCase();
+            if (tagName === 'svg' || element.closest('svg')) return true;
+            return false;
+          }
+          
+          async function showActionPopup(svgData, mouseX, mouseY) {
+            if (popupVisible) return;
+            const existingNotifications = document.querySelectorAll('.svag-notification.svag-visible');
+            existingNotifications.forEach(notification => {
+              notification.classList.add('svag-hiding');
+              setTimeout(() => notification.remove(), 200);
+            });
+            if (!previewOverlay) previewOverlay = createActionPopup();
+            currentHoveredSvg = svgData;
+            popupVisible = true;
+            if (!svgData.content && svgData.url) {
+              try {
+                const response = await fetch(svgData.url);
+                svgData.content = await response.text();
+              } catch (error) {
+                console.error('Chyba při načítání SVG:', error);
+              }
+            }
+            const popup = previewOverlay;
+            popup.style.display = 'flex';
+            const popupWidth = 42 * 2 + 4;
+            const popupHeight = 42;
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            let left = mouseX - 44;
+            let top = mouseY + 20;
+            if (left + popupWidth > viewportWidth) left = viewportWidth - popupWidth - 10;
+            if (left < 10) left = 10;
+            if (top + popupHeight > viewportHeight) top = mouseY - popupHeight - 20;
+            if (top < 10) top = 10;
+            popup.style.left = left + 'px';
+            popup.style.top = top + 'px';
+            popupPosition = { x: left, y: top };
+            requestAnimationFrame(() => popup.classList.add('svag-visible'));
+          }
+          
+          function hideActionPopup() {
+            if (previewOverlay) {
+              previewOverlay.classList.remove('svag-visible');
+              setTimeout(() => { previewOverlay.style.display = 'none'; }, 150);
+            }
+            currentHoveredSvg = null;
+            popupVisible = false;
+          }
+          
+          function sanitizeFilename(name) {
+            return name.toLowerCase().replace(/[^a-z0-9-_]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').substring(0, 50);
+          }
+          
+          function extractIconName(svgElement) {
+            if (!svgElement) return null;
+            const dataIcon = svgElement.getAttribute('data-icon') || '';
+            if (dataIcon) return sanitizeFilename(dataIcon);
+            return null;
+          }
+          
+          function downloadDirectly(url, filename, sizeKB = null) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            const message = sizeKB ? sizeKB + 'kb ' + filename : filename;
+            showNotification(message, popupPosition);
+          }
+          
+          async function downloadSvg(svgData) {
+            let content = svgData.content;
+            if (!content && svgData.url) {
+              try {
+                const response = await fetch(svgData.url);
+                content = await response.text();
+              } catch (error) {
+                showNotification('load error', popupPosition);
+                return;
+              }
+            }
+            if (!content) {
+              showNotification('no content', popupPosition);
+              return;
+            }
+            const blob = new Blob([content], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const sizeKB = (blob.size / 1024).toFixed(1);
+            const iconName = extractIconName(svgData.element);
+            const timestamp = new Date().getTime();
+            let filename = iconName ? iconName + '.svg' : 'svg-icon-' + timestamp + '.svg';
+            downloadDirectly(url, filename, sizeKB);
+            hideActionPopup();
+          }
+          
+          function showNotification(message, position = null) {
+            const notification = document.createElement('div');
+            notification.className = 'svag-notification';
+            const textSpan = document.createElement('span');
+            textSpan.style.position = 'relative';
+            textSpan.style.zIndex = '1';
+            textSpan.textContent = message;
+            notification.appendChild(textSpan);
+            if (position && position.x && position.y) {
+              notification.style.position = 'fixed';
+              notification.style.left = position.x + 'px';
+              notification.style.top = position.y + 'px';
+              notification.style.bottom = 'auto';
+              notification.style.right = 'auto';
+              notification.style.transform = 'translateY(0)';
+            }
+            document.body.appendChild(notification);
+            setTimeout(() => notification.classList.add('svag-visible'), 10);
+            setTimeout(() => {
+              notification.classList.add('svag-hiding');
+              setTimeout(() => notification.remove(), 200);
+            }, 1500);
+          }
+          
+          document.addEventListener('keydown', (e) => {
+            if (e.key === 'Meta' || e.key === 'Command' || e.key === 'Control') isCommandPressed = true;
+          });
+          
+          document.addEventListener('keyup', (e) => {
+            if (e.key === 'Meta' || e.key === 'Command' || e.key === 'Control') {
+              isCommandPressed = false;
+              if (currentHoveredSvg) hideActionPopup();
+            }
+          });
+          
+          document.addEventListener('mouseover', (e) => {
+            const isCommandHeld = e.metaKey || e.ctrlKey;
+            if (!isCommandHeld) return;
+            const element = e.target;
+            if (element.closest('#svag-action-popup') || element.id === 'svag-action-popup') return;
+            if (element.closest('.svag-notification') || element.classList.contains('svag-notification')) return;
+            let svgElement = element;
+            if (!isSvgElement(element) && element.closest('svg')) svgElement = element.closest('svg');
+            if (isSvgElement(svgElement)) {
+              const svgData = getSvgData(svgElement);
+              if (svgData && !popupVisible) {
+                currentHoveredSvg = svgData;
+                showActionPopup(svgData, e.clientX, e.clientY);
+              }
+            }
+          });
+          
+          document.addEventListener('mousemove', (e) => {
+            const isCommandHeld = e.metaKey || e.ctrlKey;
+            if (!isCommandHeld) {
+              if (currentHoveredSvg) hideActionPopup();
+            }
+          });
+        })();
+      </script>
 
       <!-- Hero Content -->
       <div class="hero-content">
