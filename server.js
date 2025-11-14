@@ -1069,7 +1069,7 @@ app.get('/', (req, res) => {
 
     /* Iframe Demo */
     .iframe-demo {
-      margin-bottom: 100px;
+      margin-bottom: 72px;
     }
 
     /* Content Section */
@@ -1083,7 +1083,7 @@ app.get('/', (req, res) => {
       font-weight: 700;
       line-height: 1.1;
       letter-spacing: -0.72px;
-      margin-bottom: 36px;
+      margin-bottom: 120px;
       color: rgba(0, 0, 0, 0.98);
     }
 
