@@ -37,7 +37,7 @@ app.use('/iframe', express.static('iframe'));
 
 // Servírovat statické soubory z root (pro landing page)
 app.use(express.static('.', { 
-  index: false, // Nechceme automaticky servírovat index.html
+  index: 'index.html', // Automaticky servírovat index.html pro /
   dotfiles: 'ignore'
 }));
 
@@ -1009,9 +1009,10 @@ app.get('/api/admin/stats', authenticateAdmin, async (req, res) => {
 
 // ===== HTML STRÁNKY =====
 
-// Root page - Landing page
+// Root page - Landing page (servírováno přes static middleware výše)
+// Fallback pokud static middleware selže
 app.get('/', (req, res) => {
-  res.sendFile('index.html', { root: '.' });
+  res.sendFile('index.html', { root: __dirname || '.' });
 });
 
 // Gallery Login page - Přihlašovací formulář
