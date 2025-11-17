@@ -4,6 +4,12 @@ import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 import pako from 'pako';
 import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+// ES modules __dirname equivalent
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 dotenv.config();
 
@@ -24,19 +30,19 @@ app.use('/api/webhooks/stripe', express.raw({ type: 'application/json' }));
 
 // EJS template engine
 app.set('view engine', 'ejs');
-app.set('views', './views');
+app.set('views', join(__dirname, 'views'));
 
 // Servírovat statické soubory z pages složky (CSS, obrázky)
-app.use('/pages', express.static('pages'));
+app.use('/pages', express.static(join(__dirname, 'pages')));
 
 // Servírovat statické soubory z Gallery složky (CSS, JS)
-app.use('/Gallery', express.static('Gallery'));
+app.use('/Gallery', express.static(join(__dirname, 'Gallery')));
 
 // Servírovat statické soubory z iframe složky
-app.use('/iframe', express.static('iframe'));
+app.use('/iframe', express.static(join(__dirname, 'iframe')));
 
 // Servírovat statické soubory z root (pro landing page)
-app.use(express.static('.', { 
+app.use(express.static(__dirname, { 
   index: 'index.html', // Automaticky servírovat index.html pro /
   dotfiles: 'ignore'
 }));
