@@ -1,4 +1,8 @@
 // Service worker pro Chrome Extension
+
+// Flag pro prevenci smyčky synchronizace
+let isSyncingFromGallery = false;
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'download') {
     chrome.downloads.download({
@@ -39,6 +43,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'syncLogin') {
     // Galerie se přihlásila - synchronizovat do extension
     console.log('🔄 Syncing login from gallery:', request.email);
+    
+    // Nastavit flag pro prevenci smyčky
+    isSyncingFromGallery = true;
+    
     chrome.storage.sync.set({ 
       apiToken: request.token,
       refreshToken: request.refreshToken,
@@ -48,6 +56,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       // Vymazat pendingEmail (pokud uživatel čekal na OTP)
       chrome.storage.sync.remove(['pendingEmail'], () => {
         console.log('✅ Login synced to extension');
+        
+        // Reset flag po prodlevě
+        setTimeout(() => {
+          isSyncingFromGallery = false;
+          console.log('🔓 Gallery sync protection released');
+        }, 500);
+        
         sendResponse({ success: true });
       });
     });
@@ -57,8 +72,19 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'syncLogout') {
     // Galerie se odhlásila - synchronizovat do extension
     console.log('🔄 Syncing logout from gallery');
+    
+    // Nastavit flag pro prevenci smyčky
+    isSyncingFromGallery = true;
+    
     chrome.storage.sync.remove(['apiToken', 'refreshToken', 'userEmail'], () => {
       console.log('✅ Logout synced to extension');
+      
+      // Reset flag po prodlevě
+      setTimeout(() => {
+        isSyncingFromGallery = false;
+        console.log('🔓 Gallery sync protection released');
+      }, 500);
+      
       sendResponse({ success: true });
     });
     return true;
@@ -74,6 +100,12 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
       const isLogout = changes.apiToken && !changes.apiToken.newValue;
       
       if (isLogin || isLogout) {
+        // Kontrola: Pokud změna přišla z gallery, neposlat zprávu zpátky
+        if (isSyncingFromGallery) {
+          console.log('⏭️ Skipping gallery notification - change came from gallery');
+          return;
+        }
+        
         console.log(isLogin ? '🔄 Extension login detected, notifying gallery' : '🔄 Extension logout detected, notifying gallery');
         
         // 1. Najít všechny taby s galerií a poslat jim zprávu

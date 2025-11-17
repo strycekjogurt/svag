@@ -24,7 +24,9 @@
     {
       "matches": [
         "https://svag.pro/gallery*",
-        "https://*/gallery*"
+        "https://*.vercel.app/gallery*",
+        "https://*/gallery*",
+        "http://localhost:*/gallery*"
       ],
       "js": ["Gallery/gallery-sync.js"],
       "run_at": "document_start"

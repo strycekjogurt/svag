@@ -4,9 +4,15 @@ console.log('📡 Gallery sync content script loaded');
 // Sledovat localStorage pro automatickou synchronizaci
 let lastToken = localStorage.getItem('token');
 let lastEmail = localStorage.getItem('userEmail');
+let isSyncingFromExtension = false; // Flag pro prevenci smyčky
 
 // Kontrolovat localStorage každých 100ms
 setInterval(() => {
+  // Přeskočit kontrolu pokud právě synchronizujeme z extension
+  if (isSyncingFromExtension) {
+    return;
+  }
+  
   const currentToken = localStorage.getItem('token');
   const currentEmail = localStorage.getItem('userEmail');
   
@@ -58,6 +64,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log('📨 Gallery received message from extension:', request.action);
   
   if (request.action === 'extensionLogin' || request.action === 'extensionLogout') {
+    // Nastavit flag pro prevenci smyčky
+    isSyncingFromExtension = true;
+    
+    // Aktualizovat lastToken/lastEmail aby se neposlal sync zpět
+    if (request.action === 'extensionLogin') {
+      lastToken = request.token;
+      lastEmail = request.email;
+    } else {
+      lastToken = null;
+      lastEmail = null;
+    }
+    
     // Předat zprávu do window (aby ji viděl gallery script.js)
     window.postMessage({
       source: 'svag-extension',
@@ -65,6 +83,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       token: request.token,
       email: request.email
     }, '*');
+    
+    // Reset flag po prodlevě (localStorage update proběhne v mezičase)
+    setTimeout(() => {
+      isSyncingFromExtension = false;
+      console.log('🔓 Sync protection released');
+    }, 500);
     
     sendResponse({ success: true });
   }
