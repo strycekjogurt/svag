@@ -43,7 +43,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       apiToken: request.token,
       refreshToken: request.refreshToken,
       userEmail: request.email,
-      apiUrl: request.apiUrl || 'https://svag.vercel.app'
+      apiUrl: request.apiUrl || 'https://svag.pro'
     }, () => {
       // Vymazat pendingEmail (pokud uživatel čekal na OTP)
       chrome.storage.sync.remove(['pendingEmail'], () => {

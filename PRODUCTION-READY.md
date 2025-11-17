@@ -9,7 +9,7 @@ Poslední aktualizace: 13. listopadu 2025
 ## 🎉 Co je hotovo
 
 ### ✅ Backend (Vercel)
-- **URL**: `https://svag.vercel.app`
+- **URL**: `https://svag.pro`
 - **Stav**: ✅ Funguje
 - **Environment Variables**: ✅ Nastavené
 - **Endpoints**:
@@ -26,7 +26,7 @@ Poslední aktualizace: 13. listopadu 2025
 
 ### ✅ Chrome Extension
 - **ZIP**: `svag-extension.zip` (40KB)
-- **API URL**: `https://svag.vercel.app`
+- **API URL**: `https://svag.pro`
 - **Stav**: ✅ Připraveno pro Web Store
 
 ---
@@ -35,10 +35,10 @@ Poslední aktualizace: 13. listopadu 2025
 
 ### Kritické soubory (opraveno):
 1. ✅ **server.js** (8 změn)
-   - Všechny fallbacky nyní používají `https://svag.vercel.app`
+   - Všechny fallbacky nyní používají `https://svag.pro`
    
 2. ✅ **popup.js** (2 změny)
-   - Výchozí API URL: `https://svag.vercel.app`
+   - Výchozí API URL: `https://svag.pro`
    - Chybové hlášky aktualizovány
    
 3. ✅ **background.js** (1 změna)
@@ -54,7 +54,7 @@ Poslední aktualizace: 13. listopadu 2025
    - Content script match pattern aktualizován
    
 7. ✅ **popup.html** (již dříve opraveno)
-   - Hidden input API URL: `https://svag.vercel.app`
+   - Hidden input API URL: `https://svag.pro`
 
 ### Dokumentační soubory (aktualizováno):
 8. ✅ **env.template** - Produkční URL jako výchozí
@@ -71,11 +71,11 @@ Poslední aktualizace: 13. listopadu 2025
 
 | Služba | URL |
 |--------|-----|
-| **Frontend/Backend** | https://svag.vercel.app |
-| **Galerie** | https://svag.vercel.app/gallery |
-| **Privacy Policy** | https://svag.vercel.app/privacy |
-| **Health Check** | https://svag.vercel.app/health |
-| **API** | https://svag.vercel.app/api/* |
+| **Frontend/Backend** | https://svag.pro |
+| **Galerie** | https://svag.pro/gallery |
+| **Privacy Policy** | https://svag.pro/privacy |
+| **Health Check** | https://svag.pro/health |
+| **API** | https://svag.pro/api/* |
 
 ---
 
@@ -84,13 +84,13 @@ Poslední aktualizace: 13. listopadu 2025
 ### Automatické testy:
 ```bash
 # Health check
-curl https://svag.vercel.app/health
+curl https://svag.pro/health
 # Očekáváno: {"status":"ok","timestamp":"..."}
 ```
 
 ### Manuální testy:
-1. ✅ **Gallery page** - https://svag.vercel.app/gallery
-2. ✅ **Privacy Policy** - https://svag.vercel.app/privacy
+1. ✅ **Gallery page** - https://svag.pro/gallery
+2. ✅ **Privacy Policy** - https://svag.pro/privacy
 3. ⏳ **Extension** - Nahrajte svag-extension.zip do Chrome
 4. ⏳ **API endpoints** - Test přes extension
 
@@ -103,7 +103,7 @@ curl https://svag.vercel.app/health
 #### 1. Stripe Setup (pokud chcete platby)
 - [ ] Vytvořit Stripe účet
 - [ ] Vytvořit Pro produkt ($9.99/měsíc)
-- [ ] Nastavit webhook: `https://svag.vercel.app/api/webhooks/stripe`
+- [ ] Nastavit webhook: `https://svag.pro/api/webhooks/stripe`
 - [ ] Přidat `STRIPE_WEBHOOK_SECRET` do Vercel ENV
 
 #### 2. Chrome Web Store Publikace
@@ -149,7 +149,7 @@ Zkontrolujte že máte nastavené:
 - ✅ `STRIPE_PUBLISHABLE_KEY`
 - ✅ `STRIPE_PRO_PRICE_ID`
 - ⏳ `STRIPE_WEBHOOK_SECRET` (přidat po Stripe setupu)
-- ✅ `FRONTEND_URL` = `https://svag.vercel.app`
+- ✅ `FRONTEND_URL` = `https://svag.pro`
 
 ### NIKDY nesdílejte:
 - ❌ `SUPABASE_SERVICE_ROLE_KEY`
@@ -167,7 +167,7 @@ Pro lokální vývoj můžete stále použít `localhost:3000`:
 3. Pracujte lokálně
 
 ### Production vs Development
-- **Production**: Extension používá `https://svag.vercel.app`
+- **Production**: Extension používá `https://svag.pro`
 - **Development**: Můžete přepnout na `localhost:3000` v extension popup
 
 ---

@@ -30,7 +30,7 @@ npm run dev
 
 Server běží na: 
 - Local: http://localhost:3000
-- Production: https://svag.vercel.app
+- Production: https://svag.pro
   - Landing page: `/` (root)
   - User gallery: `/gallery`
 

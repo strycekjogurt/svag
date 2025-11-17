@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>svag - Instantly save any SVG you find</title>
+  <link rel="icon" type="image/png" href="/icons/icon16.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
@@ -225,6 +226,25 @@
         padding: 20px;
       }
     }
+
+    /* Copy button styling */
+    .step.link.copy-btn {
+      background: none;
+      border: none;
+      font-family: inherit;
+      font-size: inherit;
+      cursor: pointer;
+      padding: 0;
+      transition: all 0.2s ease;
+    }
+
+    .step.link.copy-btn:hover {
+      opacity: 0.8;
+    }
+
+    .step.link.copy-btn:active {
+      transform: scale(0.98);
+    }
   </style>
 </head>
 <body>
@@ -252,7 +272,7 @@
         <div class="chrome-extension-badge">
           <img src="chrome-icon.png" alt="Chrome" class="chrome-icon">
           <div class="badge-text">
-            <a href="https://chrome.google.com/webstore" target="_blank">Chrome extension</a>
+            <a href="/svag.zip" download>Chrome extension</a>
             <span>that saves time</span>
           </div>
         </div>
@@ -261,17 +281,108 @@
       <!-- Installation Steps -->
       <div class="installation-box">
         <div class="installation-steps">
-          <a href="/svag-chrome-extension.zip" download class="step download-btn">
+          <a href="/svag.zip" download class="step download-btn">
             Download svag
           </a>
           <span class="step secondary">Unzip in your computer</span>
-          <a href="chrome://extensions/" class="step link">chrome://extensions/</a>
+          <button onclick="copyExtensionsURL(event)" class="step link copy-btn" title="Click to copy">📋 chrome://extensions/</button>
           <span class="step primary">Switch to dev mode</span>
           <span class="step primary">Load unpacked</span>
         </div>
       </div>
     </section>
   </div>
+  
+  <script>
+    function copyExtensionsURL(event) {
+      const url = 'chrome://extensions/';
+      const btn = event.target;
+      
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => {
+          // Change button text to confirmation
+          const originalText = btn.textContent;
+          btn.textContent = '✅ Copied!';
+          btn.style.color = '#4caf50';
+          
+          setTimeout(() => {
+            btn.textContent = originalText;
+            btn.style.color = '';
+          }, 2000);
+          
+          // Show tooltip with instruction
+          showTooltip('Paste it in Chrome address bar (Ctrl+L or Cmd+L, then Ctrl+V)');
+        }).catch(() => {
+          // Fallback for older browsers
+          promptManualCopy(url);
+        });
+      } else {
+        // Fallback for browsers without clipboard API
+        promptManualCopy(url);
+      }
+    }
+
+    function promptManualCopy(url) {
+      const input = document.createElement('input');
+      input.value = url;
+      document.body.appendChild(input);
+      input.select();
+      try {
+        document.execCommand('copy');
+        showTooltip('URL copied! Paste it in Chrome address bar.');
+      } catch (err) {
+        prompt('Copy this URL to Chrome address bar:', url);
+      }
+      document.body.removeChild(input);
+    }
+
+    function showTooltip(message) {
+      // Remove existing tooltip if any
+      const existing = document.querySelector('.copy-tooltip');
+      if (existing) existing.remove();
+      
+      const tooltip = document.createElement('div');
+      tooltip.className = 'copy-tooltip';
+      tooltip.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #333;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        z-index: 9999;
+        font-size: 14px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        animation: slideDown 0.3s ease;
+      `;
+      tooltip.textContent = message;
+      document.body.appendChild(tooltip);
+      
+      setTimeout(() => {
+        tooltip.style.opacity = '0';
+        tooltip.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => tooltip.remove(), 300);
+      }, 3000);
+    }
+
+    // Add animation for tooltip
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes slideDown {
+        from {
+          opacity: 0;
+          transform: translateX(-50%) translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(-50%) translateY(0);
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  </script>
 </body>
 </html>
 

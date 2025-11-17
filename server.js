@@ -1032,6 +1032,7 @@ app.get('/', (req, res) => {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>svag - Instantly save any SVG you find</title>
+  <link rel="icon" type="image/png" href="/icons/icon16.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
@@ -1091,7 +1092,7 @@ app.get('/', (req, res) => {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      margin-bottom: 80px;
+      margin-bottom: 72px;
     }
 
     .chrome-icon {
@@ -1124,6 +1125,7 @@ app.get('/', (req, res) => {
     .installation-box {
       background: white;
       border: 1px solid rgba(0, 0, 0, 0.12);
+      box-shadow: 0 4px 18px 0 rgba(0, 0, 0, 0.12);
       border-radius: 32px;
       padding: 76px;
       max-width: 1280px;
@@ -1689,7 +1691,7 @@ app.get('/', (req, res) => {
             </defs>
           </svg>
           <div class="badge-text">
-            <a href="#" onclick="openChromeExtensions(); return false;">Chrome extension</a>
+            <a href="/svag.zip" download>Chrome extension</a>
             <span>that saves time</span>
           </div>
         </div>
@@ -1704,39 +1706,128 @@ app.get('/', (req, res) => {
       <!-- Installation Steps -->
       <div class="installation-box">
         <div class="installation-steps">
-          <a href="/svag-chrome-extension.zip" download class="step download-btn">
+          <a href="/svag.zip" download class="step download-btn">
             Download svag
           </a>
           <span class="step secondary">Unzip in your computer</span>
-          <a href="#" onclick="openChromeExtensions(); return false;" class="step link">chrome://extensions/</a>
-          <a href="#" onclick="openChromeExtensions(); return false;" class="step link">Switch to dev mode</a>
-          <a href="#" onclick="openChromeExtensions(); return false;" class="step link">Load unpacked</a>
+          <button onclick="openChromeExtensions(event)" class="step link copy-btn" title="Click to copy">📋 chrome://extensions/</button>
+          <span class="step secondary">Switch to dev mode</span>
+          <span class="step secondary">Load unpacked</span>
         </div>
       </div>
     </section>
   </div>
   <script>
-    function openChromeExtensions() {
+    function openChromeExtensions(event) {
+      if (event) event.preventDefault();
+      
+      const url = 'chrome://extensions/';
+      const btn = event ? event.target : null;
+      
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => {
+          // Change button text to confirmation
+          if (btn) {
+            const originalText = btn.textContent;
+            btn.textContent = '✅ Copied!';
+            btn.style.color = '#4caf50';
+            
+            setTimeout(() => {
+              btn.textContent = originalText;
+              btn.style.color = '';
+            }, 2000);
+          }
+          
+          // Show tooltip with instruction
+          showTooltip('Paste it in Chrome address bar (Ctrl+L or Cmd+L, then Ctrl+V)');
+        }).catch(() => {
+          promptManualCopy(url);
+        });
+      } else {
+        promptManualCopy(url);
+      }
+    }
+
+    function promptManualCopy(url) {
+      const input = document.createElement('input');
+      input.value = url;
+      document.body.appendChild(input);
+      input.select();
       try {
-        // Zkusit otevřít chrome://extensions/ přímo
-        window.location.href = 'chrome://extensions/';
-      } catch(e) {
-        // Pokud to nefunguje, zkusit přes window.open
-        try {
-          window.open('chrome://extensions/', '_blank');
-        } catch(e2) {
-          // Fallback - zkopírovat URL do schránky
-          if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText('chrome://extensions/').then(() => {
-              alert('URL zkopírována do schránky! Vlož ji do Chrome adresního řádku.');
-            }).catch(() => {
-              prompt('Zkopíruj tuto URL do Chrome adresního řádku:', 'chrome://extensions/');
-            });
-          } else {
-            prompt('Zkopíruj tuto URL do Chrome adresního řádku:', 'chrome://extensions/');
+        document.execCommand('copy');
+        showTooltip('URL copied! Paste it in Chrome address bar.');
+      } catch (err) {
+        prompt('Copy this URL to Chrome address bar:', url);
+      }
+      document.body.removeChild(input);
+    }
+
+    function showTooltip(message) {
+      const existing = document.querySelector('.copy-tooltip');
+      if (existing) existing.remove();
+      
+      const tooltip = document.createElement('div');
+      tooltip.className = 'copy-tooltip';
+      tooltip.style.cssText = \`
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #333;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        z-index: 9999;
+        font-size: 14px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        animation: slideDown 0.3s ease;
+      \`;
+      tooltip.textContent = message;
+      document.body.appendChild(tooltip);
+      
+      setTimeout(() => {
+        tooltip.style.opacity = '0';
+        tooltip.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => tooltip.remove(), 300);
+      }, 3000);
+    }
+
+    // Add animation
+    if (!document.querySelector('#tooltip-animation')) {
+      const style = document.createElement('style');
+      style.id = 'tooltip-animation';
+      style.textContent = \`
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
           }
         }
-      }
+        .step.link.copy-btn {
+          background: none;
+          border: none;
+          font-family: inherit;
+          font-size: inherit;
+          cursor: pointer;
+          padding: 0;
+          transition: all 0.2s ease;
+          color: rgba(0, 0, 0, 0.98);
+          font-weight: 500;
+          text-decoration: underline;
+          text-underline-position: from-font;
+        }
+        .step.link.copy-btn:hover {
+          opacity: 0.8;
+        }
+        .step.link.copy-btn:active {
+          transform: scale(0.98);
+        }
+      \`;
+      document.head.appendChild(style);
     }
   </script>
 </body>
@@ -1753,6 +1844,7 @@ app.get('/gallery/login', (req, res) => {
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Login - svag</title>
+      <link rel="icon" type="image/png" href="/icons/icon16.png">
       <link rel="preconnect" href="https://fonts.googleapis.com">
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -2227,6 +2319,7 @@ app.get('/gallery', (req, res) => {
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>SVG Gallery - svag</title>
+      <link rel="icon" type="image/png" href="/icons/icon16.png">
       <script src="https://js.stripe.com/v3/"></script>
       <link rel="preconnect" href="https://fonts.googleapis.com">
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2760,6 +2853,7 @@ app.get('/privacy', (req, res) => {
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Privacy Policy - SVAG</title>
+      <link rel="icon" type="image/png" href="/icons/icon16.png">
       <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
@@ -2882,7 +2976,7 @@ app.get('/privacy', (req, res) => {
         <h2>10. Contact</h2>
         <p>For questions regarding privacy, contact:</p>
         <p><strong>Email:</strong> privacy@svag.app</p>
-        <p><strong>Web:</strong> ${process.env.FRONTEND_URL || 'https://svag.vercel.app'}</p>
+        <p><strong>Web:</strong> ${process.env.FRONTEND_URL || 'https://svag.pro'}</p>
         <p>We will respond within 48 hours.</p>
       </div>
       

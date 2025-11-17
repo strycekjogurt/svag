@@ -28,7 +28,7 @@ async function getValidToken() {
     if (expiresAt - now < 5 * 60 * 1000) {
       console.log('🔄 Token expiring soon, refreshing...');
       
-      const apiUrl = result.apiUrl || 'https://svag.vercel.app';
+      const apiUrl = result.apiUrl || 'https://svag.pro';
       const response = await fetch(`${apiUrl}/api/auth/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -659,7 +659,7 @@ async function sendToGallery(svgData) {
     
     try {
       // Odeslat do API
-      const response = await fetch(`${result.apiUrl || 'https://svag.vercel.app'}/api/gallery`, {
+      const response = await fetch(`${result.apiUrl || 'https://svag.pro'}/api/gallery`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

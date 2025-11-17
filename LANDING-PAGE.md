@@ -1,6 +1,6 @@
 # 🎨 svag Landing Page
 
-Nová úvodní stránka pro https://svag.vercel.app/ podle Figma designu.
+Nová úvodní stránka pro https://svag.pro/ podle Figma designu.
 
 ## 📦 Struktura
 
@@ -88,7 +88,7 @@ http://localhost:3000
 git push origin main
 
 # Automatický deploy na Vercel
-# URL: https://svag.vercel.app/
+# URL: https://svag.pro/
 ```
 
 ## 🔧 Konfigurace Server.js

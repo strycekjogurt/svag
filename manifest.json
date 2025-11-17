@@ -23,7 +23,7 @@
     },
     {
       "matches": [
-        "https://svag.vercel.app/gallery*",
+        "https://svag.pro/gallery*",
         "https://*/gallery*"
       ],
       "js": ["Gallery/gallery-sync.js"],

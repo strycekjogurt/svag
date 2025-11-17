@@ -24,7 +24,7 @@ const galleryLimit = document.getElementById('galleryLimit');
 const limitText = document.getElementById('limitText');
 
 // API URL - načte se z chrome.storage nebo použije default
-let apiUrl = 'https://svag.vercel.app';
+let apiUrl = 'https://svag.pro';
 
 // State
 let currentScheme = 'white-black';
@@ -326,7 +326,7 @@ function attachAuthListeners() {
           `Please check:\n` +
           `1. Is the server running?\n` +
           `2. Is the API URL correct?\n` +
-          `3. Try opening: https://svag.vercel.app/health`;
+          `3. Try opening: https://svag.pro/health`;
       } else if (error.message.includes('JSON')) {
         errorMessage = `Server returned invalid response.\n\n` +
           `Error: ${error.message}\n\n` +

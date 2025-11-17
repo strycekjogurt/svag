@@ -200,7 +200,7 @@ vercel --prod
 
 #### [ ] Krok 1: Aktualizovat API URL v popup.html
 1. Otevřete soubor: `popup.html`
-2. Najděte řádek: `<input type="hidden" id="apiUrl" value="https://svag.vercel.app" />`
+2. Najděte řádek: `<input type="hidden" id="apiUrl" value="https://svag.pro" />`
 3. Změňte na vaši production URL: `https://svag-xxxxx.vercel.app`
 4. Uložte soubor
 

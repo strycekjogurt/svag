@@ -369,7 +369,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(\`Server běží na http://localhost:\${PORT}\`);
   console.log(\`Galerie: http://localhost:\${PORT}/gallery\`);
-  console.log(\`Produkce: https://svag.vercel.app\`);
+  console.log(\`Produkce: https://svag.pro\`);
 });
 \`\`\`
 
@@ -382,15 +382,15 @@ node server.js
 5. **V extension nastavte API URL:**
    - Klikněte na ikonu extension
    - V poli "API URL" zadejte: 
-     - Produkce: `https://svag.vercel.app`
+     - Produkce: `https://svag.pro`
      - Lokální development: `http://localhost:3000`
    - Klikněte "Uložit"
 
 6. **Zaregistrujte se a přihlaste se**
 
 7. **Otevřete galerii:**
-   - Landing page: `https://svag.vercel.app/` (produkce) nebo `http://localhost:3000/` (lokální)
-   - Vaše galerie: `https://svag.vercel.app/gallery` (produkce) nebo `http://localhost:3000/gallery` (lokální)
+   - Landing page: `https://svag.pro/` (produkce) nebo `http://localhost:3000/` (lokální)
+   - Vaše galerie: `https://svag.pro/gallery` (produkce) nebo `http://localhost:3000/gallery` (lokální)
 
 ## 🎨 Přizpůsobení designu
 

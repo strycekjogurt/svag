@@ -143,7 +143,7 @@ STRIPE_PRO_PRICE_ID=price_xxxxx
 STRIPE_WEBHOOK_SECRET=whsec_xxxxx  # Prozatím nechte prázdné
 
 # Frontend (Production)
-FRONTEND_URL=https://svag.vercel.app
+FRONTEND_URL=https://svag.pro
 # For local development: http://localhost:3000
 
 # Server
@@ -170,15 +170,15 @@ Měli byste vidět:
 
 ✅  Server běží na:       http://localhost:3000
 🖼️  Galerie:              http://localhost:3000/gallery
-🚀  Produkce:             https://svag.vercel.app
+🚀  Produkce:             https://svag.pro
 ...
 ```
 
 ### 3.4 Test v Prohlížeči
 
 1. Otevřete: 
-   - **Landing page**: https://svag.vercel.app (produkce) / http://localhost:3000 (lokální)
-   - **Galerie uživatelů**: https://svag.vercel.app/gallery (produkce) / http://localhost:3000/gallery (lokální)
+   - **Landing page**: https://svag.pro (produkce) / http://localhost:3000 (lokální)
+   - **Galerie uživatelů**: https://svag.pro/gallery (produkce) / http://localhost:3000/gallery (lokální)
 2. Měli byste vidět:
    - Na root `/` = Landing page s informacemi a emoji 🎨
    - Na `/gallery` = Přihlašovací formulář nebo vaše galerie ikon

@@ -76,8 +76,8 @@ node server.js
 ```
 
 Access it at:
-- **Landing page**: `https://svag.vercel.app/` (production) / `http://localhost:3000/` (local)
-- **User gallery**: `https://svag.vercel.app/gallery` (production) / `http://localhost:3000/gallery` (local)
+- **Landing page**: `https://svag.pro/` (production) / `http://localhost:3000/` (local)
+- **User gallery**: `https://svag.pro/gallery` (production) / `http://localhost:3000/gallery` (local)
 
 ## 🎨 Customization
 
