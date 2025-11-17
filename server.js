@@ -1050,17 +1050,6 @@ app.get('/admin', (req, res) => {
   res.send('<h1>Admin Panel - Coming Soon</h1><p>Používejte Supabase Dashboard pro správu uživatelů.</p>');
 });
 
-// Download ZIP file
-app.get('/svag.zip', (req, res) => {
-  const filePath = join(__dirname, 'svag.zip');
-  res.download(filePath, 'svag.zip', (err) => {
-    if (err) {
-      console.error('Error downloading file:', err);
-      res.status(404).send('File not found');
-    }
-  });
-});
-
 // Health check
 app.get('/health', (req, res) => {
   res.json({ 
