@@ -18,8 +18,14 @@ async function getValidToken() {
   const storedToken = localStorage.getItem('token');
   const storedRefreshToken = localStorage.getItem('refreshToken');
   
-  if (!storedToken || !storedRefreshToken) {
+  if (!storedToken) {
     return null;
+  }
+  
+  // Pokud nemáme refreshToken, vrátit token (bez možnosti refresh)
+  if (!storedRefreshToken) {
+    console.warn('⚠️ No refresh token available - token cannot be auto-refreshed');
+    return storedToken;
   }
   
   try {
