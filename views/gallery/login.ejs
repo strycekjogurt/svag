@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SVG Gallery - Login</title>
+  <link rel="stylesheet" href="/Gallery/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="login-body">
+  <div id="loginSection" class="login-container">
+    <!-- Header -->
+    <header class="login-header">
+      <h1 class="login-logo">svag</h1>
+    </header>
+    
+    <div class="login-content">
+      <!-- Email Step -->
+      <div id="emailStep" class="auth-step">
+        <input 
+          type="email" 
+          id="emailInput" 
+          class="login-input" 
+          placeholder="Start with your mail" 
+        />
+        <button id="sendBtn" class="login-btn" style="display: none;">Continue</button>
+      </div>
+      
+      <!-- Code Step -->
+      <div id="codeStep" class="auth-step" style="display: none;">
+        <p class="code-instruction">Check your mailbox and enter the code.</p>
+        <div class="code-inputs-grid">
+          <input type="text" class="code-input" maxlength="1" data-index="0" />
+          <input type="text" class="code-input" maxlength="1" data-index="1" />
+          <input type="text" class="code-input" maxlength="1" data-index="2" />
+          <input type="text" class="code-input" maxlength="1" data-index="3" />
+          <input type="text" class="code-input" maxlength="1" data-index="4" />
+          <input type="text" class="code-input" maxlength="1" data-index="5" />
+          <input type="text" class="code-input" maxlength="1" data-index="6" />
+          <input type="text" class="code-input" maxlength="1" data-index="7" />
+        </div>
+        <a href="#" id="resendEmailLink" class="resend-link">Resend code</a>
+        <button id="verifyCodeBtn" class="login-btn" style="display: none;">Verify</button>
+      </div>
+      
+      <!-- Register Success -->
+      <div id="registerSuccess" class="auth-step" style="display: none;">
+        <p class="auth-info">Activation link sent to <strong id="registerEmail"></strong></p>
+        <p class="auth-hint">Please check your email and click the link to activate your account.</p>
+        <button id="backToEmailBtn" class="login-btn-secondary">Back</button>
+      </div>
+    </div>
+  </div>
+  
+  <script src="/Gallery/script.js"></script>
+</body>
+</html>
