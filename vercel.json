@@ -8,6 +8,10 @@
   ],
   "routes": [
     {
+      "src": "/svag\\.zip",
+      "dest": "/svag.zip"
+    },
+    {
       "src": "/(.*)",
       "dest": "server.js"
     }
