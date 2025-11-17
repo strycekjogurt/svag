@@ -41,6 +41,9 @@ app.use('/Gallery', express.static(join(__dirname, 'Gallery')));
 // Servírovat statické soubory z iframe složky
 app.use('/iframe', express.static(join(__dirname, 'iframe')));
 
+// Servírovat ikony
+app.use('/icons', express.static(join(__dirname, 'icons')));
+
 // Inicializace Supabase
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
