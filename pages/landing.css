@@ -33,8 +33,12 @@ body {
 
 /* Iframe Demo */
 .iframe-demo {
-  margin-bottom: 100px;
+  background: #ffffff;
+  margin-bottom: 54px;
+  width: 360px;
+  height: 360px;
 }
+
 
 /* Content Section */
 .hero-content {
@@ -43,19 +47,20 @@ body {
 }
 
 .hero-title {
-  font-size: 72px;
+  font-size: 68px;
   font-weight: 700;
   line-height: 1.1;
   letter-spacing: -0.72px;
-  margin-bottom: 36px;
+  margin-bottom: 112px;
   color: rgba(0, 0, 0, 0.98);
+  
 }
 
 .chrome-extension-badge {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 80px;
+  margin-bottom: 72px;
 }
 
 .chrome-icon {
@@ -134,8 +139,10 @@ body {
 }
 
 .step.link {
+  font-size: 14px;
+  line-height: 14px;
+  font-weight: 400;
   color: rgba(0, 0, 0, 0.98);
-  font-weight: 500;
   text-decoration: underline;
   text-underline-position: from-font;
 }
@@ -149,8 +156,10 @@ body {
 .step.link.copy-btn {
   background: none;
   border: none;
-  font-family: inherit;
-  font-size: inherit;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 14px;
+  font-weight: 400;
   cursor: pointer;
   padding: 0;
   transition: all 0.2s ease;

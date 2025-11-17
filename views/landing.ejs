@@ -15,7 +15,7 @@
     <section class="hero">
       <!-- Iframe Demo -->
       <div class="iframe-demo">
-        <iframe src="/iframe/index.html" width="360" height="360" frameborder="0" style="border: 1px solid rgba(0, 0, 0, 0.12); border-radius: 16px; overflow: hidden; box-shadow: 1px 1px 24px 0px inset rgba(0, 0, 0, 0.1);"></iframe>
+        <iframe src="/iframe/index.html" width="360" height="360" frameborder="0" scrolling="no" style="border: none; display: block;"></iframe>
       </div>
 
       <!-- Hero Content -->
@@ -65,7 +65,7 @@
             Download svag
           </a>
           <span class="step secondary">Unzip in your computer</span>
-          <button onclick="openChromeExtensions(event)" class="step link copy-btn" title="Click to copy">📋 chrome://extensions/</button>
+          <button onclick="openChromeExtensions(event)" class="step link copy-btn" title="Click to copy">chrome://extensions/</button>
           <span class="step secondary">Switch to dev mode</span>
           <span class="step secondary">Load unpacked</span>
         </div>
@@ -83,9 +83,10 @@
         navigator.clipboard.writeText(url).then(() => {
           if (btn) {
             const originalText = btn.textContent;
-            btn.textContent = '✅ Copied!';
+            btn.textContent = 'Copied!';
             btn.style.color = '#4caf50';
-            
+            btn.style.underline = 'none';
+            btn.style.textDecoration = 'none';
             setTimeout(() => {
               btn.textContent = originalText;
               btn.style.color = '';

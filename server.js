@@ -41,12 +41,6 @@ app.use('/Gallery', express.static(join(__dirname, 'Gallery')));
 // Servírovat statické soubory z iframe složky
 app.use('/iframe', express.static(join(__dirname, 'iframe')));
 
-// Servírovat statické soubory z root (pro landing page)
-app.use(express.static(__dirname, { 
-  index: 'index.html', // Automaticky servírovat index.html pro /
-  dotfiles: 'ignore'
-}));
-
 // Inicializace Supabase
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -1063,6 +1057,12 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+
+// Servírovat statické soubory z root (SVG, ZIP soubory) - AŽ PO routes!
+app.use(express.static(__dirname, { 
+  index: false, // Nepoužívat index.html, routes mají prioritu
+  dotfiles: 'ignore'
+}));
 
 const PORT = process.env.PORT || 3000;
 
