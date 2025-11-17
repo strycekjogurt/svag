@@ -11,6 +11,7 @@ let currentEmail = '';
 let allItems = [];
 let currentSort = 'newest';
 let userStats = null;
+let isProcessingMessage = false; // Flag to prevent message loop
 
 // Helper funkce pro kontrolu a refresh tokenu
 async function getValidToken() {
@@ -85,27 +86,6 @@ async function init() {
 function initLoginPage() {
   attachAuthListeners();
   
-  // ===== NOVÉ: Poslouchat na zprávy z extension =====
-  window.addEventListener('message', (event) => {
-    // Kontrola, že zpráva je od našeho content scriptu
-    if (event.data && event.data.source === 'svag-extension') {
-      if (event.data.action === 'extensionLogin') {
-        console.log('🔄 Extension logged in, syncing to gallery');
-        localStorage.setItem('token', event.data.token);
-        localStorage.setItem('userEmail', event.data.email);
-        window.location.href = '/gallery';
-      }
-      
-      if (event.data.action === 'extensionLogout') {
-        console.log('🔄 Extension logged out, syncing to gallery');
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('userEmail');
-        window.location.href = '/gallery/login';
-      }
-    }
-  });
-  
   // Check URL params (if extension passed token)
   const urlParams = new URLSearchParams(window.location.search);
   const urlToken = urlParams.get('token');
@@ -176,16 +156,6 @@ async function initGalleryPage() {
     // Clean URL (remove params)
     window.history.replaceState({}, '', '/gallery');
     console.log('🧹 Cleaned URL params');
-    
-    // Notifikovat extension o přihlášení (pro synchronizaci po aktivaci účtu)
-    console.log('📤 Notifying extension about login from activation');
-    window.postMessage({
-      source: 'svag-gallery',
-      action: 'galleryLogin',
-      token: token,
-      email: userEmail,
-      apiUrl: window.location.origin
-    }, '*');
   } else {
     console.log('📦 Checking localStorage for existing session...');
     // Check localStorage
@@ -205,27 +175,6 @@ async function initGalleryPage() {
   }
   
   console.log('✅ Valid session found - loading gallery');
-  
-  // ===== NOVÉ: Poslouchat na zprávy z extension =====
-  window.addEventListener('message', (event) => {
-    // Kontrola, že zpráva je od našeho content scriptu
-    if (event.data && event.data.source === 'svag-extension') {
-      if (event.data.action === 'extensionLogin') {
-        console.log('🔄 Extension logged in, syncing to gallery');
-        localStorage.setItem('token', event.data.token);
-        localStorage.setItem('userEmail', event.data.email);
-        window.location.reload();
-      }
-      
-      if (event.data.action === 'extensionLogout') {
-        console.log('🔄 Extension logged out, syncing to gallery');
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('userEmail');
-        window.location.href = '/gallery/login';
-      }
-    }
-  });
   
   document.getElementById('userEmail').textContent = userEmail;
   await loadGallery();
@@ -801,6 +750,49 @@ window.addEventListener('DOMContentLoaded', () => {
       alert('Payment was canceled.');
       window.history.replaceState({}, document.title, '/gallery');
     }, 500);
+  }
+});
+
+// Global message listener for extension sync (with loop protection)
+window.addEventListener('message', (event) => {
+  // Ignore messages while processing to prevent loops
+  if (isProcessingMessage) {
+    console.log('⏭️ Skipping message - already processing');
+    return;
+  }
+  
+  // Check if message is from svag extension
+  if (event.data && event.data.source === 'svag-extension') {
+    isProcessingMessage = true;
+    
+    if (event.data.action === 'extensionLogin') {
+      console.log('🔄 Extension logged in, syncing to gallery');
+      localStorage.setItem('token', event.data.token);
+      if (event.data.refreshToken) {
+        localStorage.setItem('refreshToken', event.data.refreshToken);
+      }
+      localStorage.setItem('userEmail', event.data.email);
+      
+      // Redirect based on current page
+      if (loginSection) {
+        window.location.href = '/gallery';
+      } else if (gallerySection) {
+        window.location.reload();
+      }
+    }
+    
+    if (event.data.action === 'extensionLogout') {
+      console.log('🔄 Extension logged out, syncing to gallery');
+      localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('userEmail');
+      window.location.href = '/gallery/login';
+    }
+    
+    // Reset flag after a delay to allow redirect
+    setTimeout(() => {
+      isProcessingMessage = false;
+    }, 1000);
   }
 });
 
