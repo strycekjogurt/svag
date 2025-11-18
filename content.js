@@ -113,59 +113,62 @@ console.log('🧪 [svag v1.2.0] Debug helper načten. Zadejte "svagDebug.help()"
 async function getValidToken() {
   const result = await chrome.storage.sync.get(['apiToken', 'refreshToken', 'apiUrl']);
   
-  if (!result.apiToken || !result.refreshToken) {
-    console.log('[svag v1.2.0] getValidToken: Chybí tokeny');
+  if (!result.apiToken) {
+    console.log('[svag v1.2.0] getValidToken: Token chybí v storage');
     return null;
   }
   
-  // Dekódovat JWT a zkontrolovat expiraci
   try {
     const payload = JSON.parse(atob(result.apiToken.split('.')[1]));
-    const expiresAt = payload.exp * 1000; // Convert to milliseconds
+    const expiresAt = payload.exp * 1000;
     const now = Date.now();
-    const timeUntilExpire = (expiresAt - now) / 1000 / 60; // minuty
+    const timeUntilExpire = (expiresAt - now) / 1000 / 60;
     
     console.log(`[svag v1.2.0] Token expires in ${timeUntilExpire.toFixed(1)} minutes`);
     
-    // Pokud token vyprší za méně než 5 minut, refreshnout
-    if (expiresAt - now < 5 * 60 * 1000) {
-      console.log('🔄 Token expiring soon, refreshing...');
+    // Pokud token už vypršel, nelze ho použít
+    if (expiresAt <= now) {
+      console.error('[svag v1.2.0] Token EXPIRED, cannot use');
+      return null;
+    }
+    
+    // Pokud token vyprší brzy a máme refreshToken, zkusit refresh
+    if (expiresAt - now < 5 * 60 * 1000 && result.refreshToken) {
+      console.log('🔄 Token expiring soon, attempting refresh...');
       
-      // OPRAVENO: Refresh přes background script kvůli CORS
       const apiUrl = result.apiUrl || 'https://svag.pro';
       
-      return new Promise((resolve) => {
+      const refreshedToken = await new Promise((resolve) => {
         chrome.runtime.sendMessage({
           action: 'refreshToken',
           apiUrl: `${apiUrl}/api/auth/refresh`,
           refreshToken: result.refreshToken
         }, async (response) => {
-          if (chrome.runtime.lastError) {
-            console.error('❌ Runtime error refreshing token:', chrome.runtime.lastError);
-            resolve(null); // Vrátit null, ne původní token
-          } else if (response && response.success) {
-            // Uložit nový token
+          if (chrome.runtime.lastError || !response || !response.success) {
+            console.warn('⚠️  Token refresh failed, using original token');
+            resolve(null);
+          } else {
             await chrome.storage.sync.set({
               apiToken: response.token,
               refreshToken: response.refreshToken
             });
-            console.log('✅ Token refreshed');
+            console.log('✅ Token refreshed successfully');
             resolve(response.token);
-          } else {
-            console.error('❌ Failed to refresh token:', response);
-            // Pokud refresh selhal, token je pravděpodobně neplatný
-            // Vymazat tokeny, aby se uživatel musel znovu přihlásit
-            // await chrome.storage.sync.remove(['apiToken', 'refreshToken']);
-            resolve(null); // Vrátit null, ne původní token
           }
         });
       });
+      
+      // Pokud refresh uspěl, použít nový token, jinak původní (který ještě není expired)
+      return refreshedToken || result.apiToken;
     }
     
+    // Token je validní a není třeba refresh
+    console.log('[svag v1.2.0] Token is valid, no refresh needed');
     return result.apiToken;
+    
   } catch (error) {
-    console.error('Error checking token:', error);
-    // Pokud token nelze přečíst, je neplatný
+    console.error('[svag v1.2.0] Error processing token:', error);
+    console.error('[svag v1.2.0] Token value:', result.apiToken?.substring(0, 20) + '...');
     return null;
   }
 }
@@ -1785,19 +1788,50 @@ async function sendToGallery(cleanData, element) {
         name: iconName,
         size: sizeInKB
       }
-    }, (response) => {
+    }, async (response) => {
       if (chrome.runtime.lastError) {
         console.error('[svag v1.2.0] Runtime error:', chrome.runtime.lastError);
         showNotification('connection error', popupPosition);
+        hideActionPopup();
       } else if (response && response.success) {
         console.log('[svag v1.2.0] sendToGallery: Úspěšně uloženo do galerie');
         showNotification('saved to gallery', popupPosition);
+        hideActionPopup();
       } else if (response && response.status === 401) {
-        // Token není validní nebo uživatel není přihlášen
-        console.error('[svag v1.2.0] Gallery API error 401: Unauthorized - token invalid or user not logged in');
-        showNotification('not logged in - open extension popup', popupPosition);
-        // Automaticky otevřít popup pro přihlášení
+        // Token není validní nebo uživatel není přihlášen - zkusit refresh a opakovat
+        console.error('[svag v1.2.0] Gallery API error 401: Unauthorized - attempting token refresh');
+        
+        // Zkusit refresh token a opakovat request
+        const storageResult = await chrome.storage.sync.get(['refreshToken', 'apiUrl']);
+        if (storageResult.refreshToken) {
+          console.log('[svag v1.2.0] Attempting to refresh token...');
+          
+          const refreshResponse = await new Promise((resolve) => {
+            chrome.runtime.sendMessage({
+              action: 'refreshToken',
+              apiUrl: `${storageResult.apiUrl || 'https://svag.pro'}/api/auth/refresh`,
+              refreshToken: storageResult.refreshToken
+            }, resolve);
+          });
+          
+          if (refreshResponse && refreshResponse.success) {
+            await chrome.storage.sync.set({
+              apiToken: refreshResponse.token,
+              refreshToken: refreshResponse.refreshToken
+            });
+            
+            // Opakovat save s novým tokenem
+            console.log('[svag v1.2.0] Token refreshed successfully, retrying gallery save...');
+            hideActionPopup();
+            return sendToGallery(cleanData, element);
+          }
+        }
+        
+        // Pokud refresh selhal nebo není dostupný
+        console.error('[svag v1.2.0] Token refresh failed or unavailable');
+        showNotification('session expired - please login', popupPosition);
         chrome.runtime.sendMessage({ action: 'openPopup' });
+        hideActionPopup();
       } else if (response && response.status === 400) {
         // Zkontrolovat, zda je to limit error
         if (response.error && response.error.error === 'Icon limit reached' && response.error.tier === 'free') {
@@ -1806,12 +1840,12 @@ async function sendToGallery(cleanData, element) {
           console.error('[svag v1.2.0] Gallery API error 400:', response.error);
           showNotification('save failed', popupPosition);
         }
+        hideActionPopup();
       } else {
         console.error('[svag v1.2.0] Gallery API error:', response);
         showNotification('save failed', popupPosition);
+        hideActionPopup();
       }
-      
-      hideActionPopup();
     });
   } catch (error) {
     console.error('[svag v1.2.0] Chyba při odesílání do galerie:', error);
