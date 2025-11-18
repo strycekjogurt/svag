@@ -11,6 +11,9 @@ import { dirname, join } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Import fs for reading icon files
+import fs from 'fs';
+
 dotenv.config();
 
 const app = express();
@@ -41,78 +44,78 @@ app.use('/Gallery', express.static(join(__dirname, 'Gallery')));
 // Servírovat statické soubory z iframe složky
 app.use('/iframe', express.static(join(__dirname, 'iframe')));
 
-// Debug route pro Vercel
-app.get('/debug-path', (req, res) => {
-  const fs = require('fs');
-  const path = require('path');
+// Helper function to serve icon files
+const serveIcon = (iconFileName) => {
   try {
-    const iconsPath = join(__dirname, 'icons');
-    const files = fs.readdirSync(iconsPath);
-    res.json({
-      __dirname,
-      iconsPath,
-      files,
-      cwd: process.cwd()
-    });
+    const iconPath = join(__dirname, 'icons', iconFileName);
+    return fs.readFileSync(iconPath);
   } catch (err) {
-    res.json({
-      error: err.message,
-      __dirname,
-      cwd: process.cwd()
-    });
+    console.error(`Error reading ${iconFileName}:`, err);
+    return null;
   }
+};
+
+// Servírovat ikony - direct file serving
+app.get('/icons/:filename', (req, res) => {
+  const filename = req.params.filename;
+  const iconData = serveIcon(filename);
+  
+  if (!iconData) {
+    return res.status(404).send('Icon not found');
+  }
+  
+  // Set correct content type
+  if (filename.endsWith('.png')) {
+    res.type('image/png');
+  } else if (filename.endsWith('.ico')) {
+    res.type('image/x-icon');
+  } else if (filename.endsWith('.svg')) {
+    res.type('image/svg+xml');
+  }
+  
+  res.setHeader('Cache-Control', 'public, max-age=31536000');
+  res.send(iconData);
 });
 
-// Servírovat ikony - s error handlingem
-app.use('/icons', express.static(join(__dirname, 'icons')));
-
-// Favicon routes - servírují PNG pro nejlepší kvalitu
+// Favicon routes - read files directly
 app.get('/favicon.ico', (req, res) => {
-  const iconPath = join(__dirname, 'icons', 'icon128.png');
+  const iconData = serveIcon('icon128.png');
+  if (!iconData) {
+    return res.status(404).send('Favicon not found');
+  }
   res.type('image/png');
   res.setHeader('Cache-Control', 'public, max-age=31536000');
-  res.sendFile(iconPath, (err) => {
-    if (err) {
-      console.error('Favicon error:', err);
-      res.status(404).send('Favicon not found');
-    }
-  });
+  res.send(iconData);
 });
 
 app.get('/favicon.png', (req, res) => {
-  const iconPath = join(__dirname, 'icons', 'icon128.png');
+  const iconData = serveIcon('icon128.png');
+  if (!iconData) {
+    return res.status(404).send('Favicon not found');
+  }
   res.type('image/png');
   res.setHeader('Cache-Control', 'public, max-age=31536000');
-  res.sendFile(iconPath, (err) => {
-    if (err) {
-      console.error('Favicon PNG error:', err);
-      res.status(404).send('Favicon not found');
-    }
-  });
+  res.send(iconData);
 });
 
 app.get('/favicon-32x32.png', (req, res) => {
-  const iconPath = join(__dirname, 'icons', 'icon48.png');
+  const iconData = serveIcon('icon48.png');
+  if (!iconData) {
+    return res.status(404).send('Favicon not found');
+  }
   res.type('image/png');
   res.setHeader('Cache-Control', 'public, max-age=31536000');
-  res.sendFile(iconPath, (err) => {
-    if (err) {
-      console.error('Favicon 32x32 error:', err);
-      res.status(404).send('Favicon not found');
-    }
-  });
+  res.send(iconData);
 });
 
 app.get('/favicon-16x16.png', (req, res) => {
-  const iconPath = join(__dirname, 'icons', 'icon16.png');
+  const iconData = serveIcon('icon16.png');
+  if (!iconData) {
+    return res.status(404).send('Favicon not found');
+  }
   res.type('image/png');
   res.setHeader('Cache-Control', 'public, max-age=31536000');
-  res.sendFile(iconPath, (err) => {
-    if (err) {
-      console.error('Favicon 16x16 error:', err);
-      res.status(404).send('Favicon not found');
-    }
-  });
+  res.send(iconData);
 });
 
 // Robots.txt route
