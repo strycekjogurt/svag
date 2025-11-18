@@ -213,6 +213,58 @@ function scanShadowRoots(element) {
   return svgs;
 }
 
+// Helper funkce pro nalezení SVG v elementu nebo jeho potomcích
+function findSvgInElement(element) {
+  if (!element) return null;
+  
+  // Případ 1: Element je už SVG nebo obsahuje SVG atributy
+  if (isSvgElement(element)) {
+    // Pokud je to SVG tag, vrátit ho přímo
+    if (element.tagName && element.tagName.toLowerCase() === 'svg') {
+      return element;
+    }
+    // Pokud element má SVG vlastnosti (background, mask, atd.), vrátit ho
+    return element;
+  }
+  
+  // Případ 2: SVG je parent tohoto elementu (např. klik na <use> nebo <path>)
+  const closestSvg = element.closest('svg');
+  if (closestSvg) {
+    return closestSvg;
+  }
+  
+  // Případ 3: SVG je direct child tohoto elementu (např. button > svg)
+  const svgChild = element.querySelector('svg');
+  if (svgChild) {
+    return svgChild;
+  }
+  
+  // Případ 4: IMG s SVG jako child
+  const imgSvg = element.querySelector('img[src*=".svg"], img[src^="data:image/svg"]');
+  if (imgSvg) {
+    return imgSvg;
+  }
+  
+  // Případ 5: Hledat jakýkoliv element s SVG vlastnostmi v children (max 5 úrovní)
+  try {
+    const allChildren = element.querySelectorAll('*');
+    // Omezit na prvních 50 elementů pro performance
+    for (let i = 0; i < Math.min(allChildren.length, 50); i++) {
+      const child = allChildren[i];
+      if (child.tagName && child.tagName.toLowerCase() === 'svg') {
+        return child;
+      }
+      if (isSvgElement(child)) {
+        return child;
+      }
+    }
+  } catch (error) {
+    console.debug('[svag] Error searching for SVG in children:', error);
+  }
+  
+  return null;
+}
+
 // Poslouchat změny nastavení
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'updateColorScheme') {
@@ -1384,7 +1436,6 @@ document.addEventListener('mouseover', (e) => {
   const isCommandHeld = e.metaKey || e.ctrlKey;
   
   if (!isCommandHeld) {
-    // removeCopyCursor();
     return;
   }
   
@@ -1400,25 +1451,16 @@ document.addEventListener('mouseover', (e) => {
     return;
   }
   
-  // Najít SVG element (může být potomek)
-  let svgElement = element;
-  if (!isSvgElement(element) && element.closest('svg')) {
-    svgElement = element.closest('svg');
-  }
+  // Najít SVG element - může být parent, sám element, nebo child (např. v buttonu)
+  const svgElement = findSvgInElement(element);
   
-  if (isSvgElement(svgElement)) {
-    // Nastavit copy cursor - VYPNUTO, používáme defaultní cursor
-    // setCopyCursor(svgElement);
-    
+  if (svgElement) {
     const svgData = getSvgData(svgElement);
-    // Zobrazit popup pouze pokud není viditelný
+    // Zobrazit popup pouze pokud není viditelný a máme platná data
     if (svgData && !popupVisible) {
       currentHoveredSvg = svgData;
       showActionPopup(svgData, e.clientX, e.clientY);
     }
-  } else {
-    // Pokud to není SVG, odebrat cursor (ale NESKRÝVAT popup)
-    // removeCopyCursor();
   }
 });
 
@@ -1455,12 +1497,10 @@ document.addEventListener('click', (e) => {
     return;
   }
   
-  if (!isSvgElement(e.target) && !e.target.closest('svg')) return;
+  // Najít SVG element pomocí vylepšené funkce
+  const svgElement = findSvgInElement(e.target);
   
-  let svgElement = e.target;
-  if (!isSvgElement(e.target) && e.target.closest('svg')) {
-    svgElement = e.target.closest('svg');
-  }
+  if (!svgElement) return;
   
   const svgData = getSvgData(svgElement);
   if (!svgData) return;
@@ -1471,7 +1511,7 @@ document.addEventListener('click', (e) => {
   
   currentHoveredSvg = svgData;
   popupPosition = { x: e.clientX, y: e.clientY };
-  showActionPopup(e.clientX, e.clientY);
+  showActionPopup(svgData, e.clientX, e.clientY);
 });
 
 // MutationObserver pro sledování dynamicky přidaných SVG
@@ -1515,7 +1555,8 @@ svgMutationObserver.observe(document.body, {
   subtree: true
 });
 
-console.log('svag extension loaded - enhanced SVG detection v3.0');
+console.log('svag extension loaded - enhanced SVG detection v3.1');
 console.log('Supported SVG types: inline, img, data-uri, object, embed, background, sprite, mask, clip-path, pseudo-elements, picture, iframe, css-cursor, css-list-style, css-border-image, css-filter, css-shape-outside, foreign-object, shadow-dom, use-resolved');
 console.log('MutationObserver: active - tracking dynamic SVG additions');
+console.log('Enhanced detection: SVG in buttons and nested elements');
 
