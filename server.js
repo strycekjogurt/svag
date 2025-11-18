@@ -44,6 +44,11 @@ app.use('/iframe', express.static(join(__dirname, 'iframe')));
 // Servírovat ikony
 app.use('/icons', express.static(join(__dirname, 'icons')));
 
+// Explicitní route pro favicon - MUSÍ být před ostatními routes
+app.get('/favicon.ico', (req, res) => {
+  res.sendFile(join(__dirname, 'favicon.ico'));
+});
+
 // Inicializace Supabase
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
