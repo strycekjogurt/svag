@@ -72,6 +72,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     (async () => {
       try {
         console.log('[background] saveToGallery: Odesílám do API...');
+        console.log(`[background] Token length: ${request.token ? request.token.length : 'null'}`);
+        if (request.token) {
+          console.log(`[background] Token start: ${request.token.substring(0, 10)}...`);
+        }
         
         const response = await fetch(request.apiUrl, {
           method: 'POST',
@@ -85,6 +89,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (response.ok) {
           console.log('[background] saveToGallery: Úspěšně uloženo');
           sendResponse({ success: true });
+        } else if (response.status === 401) {
+          console.error('[background] saveToGallery: 401 Unauthorized');
+          sendResponse({ success: false, status: 401, error: 'Unauthorized' });
         } else if (response.status === 400) {
           const errorData = await response.json();
           console.error('[background] saveToGallery: API error 400:', errorData);
