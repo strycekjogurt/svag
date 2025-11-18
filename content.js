@@ -777,8 +777,22 @@ function createActionPopup() {
       if (currentHoveredSvg) {
         // NOVÉ v1.2.0: Použití nového extraction layeru
         console.log('[svag v1.2.0] galleryBtn: Extrakce čistého SVG...');
-        const cleanData = extractCleanSvg(currentHoveredSvg);
-        sendToGallery(cleanData, currentHoveredSvg);
+        
+        // Najít skutečný SVG element z objektu currentHoveredSvg
+        let svgElement = currentHoveredSvg.element;
+        
+        // Pokud to není přímo <svg>, najít SVG uvnitř
+        if (svgElement && svgElement.tagName.toLowerCase() !== 'svg') {
+          svgElement = svgElement.querySelector('svg');
+        }
+        
+        if (svgElement) {
+          const cleanData = extractCleanSvg(svgElement);
+          sendToGallery(cleanData, currentHoveredSvg.element);
+        } else {
+          console.error('[svag v1.2.0] SVG element nenalezen pro gallery');
+        }
+        
         hideActionPopup();
       }
     });
@@ -789,8 +803,22 @@ function createActionPopup() {
       if (currentHoveredSvg) {
         // NOVÉ v1.2.0: Použití nového extraction layeru
         console.log('[svag v1.2.0] downloadBtn: Extrakce čistého SVG...');
-        const cleanData = extractCleanSvg(currentHoveredSvg);
-        downloadSvg(cleanData, currentHoveredSvg);
+        
+        // Najít skutečný SVG element z objektu currentHoveredSvg
+        let svgElement = currentHoveredSvg.element;
+        
+        // Pokud to není přímo <svg>, najít SVG uvnitř
+        if (svgElement && svgElement.tagName.toLowerCase() !== 'svg') {
+          svgElement = svgElement.querySelector('svg');
+        }
+        
+        if (svgElement) {
+          const cleanData = extractCleanSvg(svgElement);
+          downloadSvg(cleanData, currentHoveredSvg.element);
+        } else {
+          console.error('[svag v1.2.0] SVG element nenalezen pro download');
+        }
+        
         hideActionPopup();
       }
     });
