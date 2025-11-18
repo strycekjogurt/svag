@@ -111,7 +111,7 @@ console.log('🧪 [svag v1.2.0] Debug helper načten. Zadejte "svagDebug.help()"
 
 // Helper funkce pro kontrolu a refresh tokenu
 async function getValidToken() {
-  const result = await chrome.storage.sync.get(['apiToken', 'refreshToken', 'apiUrl']);
+  const result = await chrome.storage.sync.get(['apiToken']);
   
   if (!result.apiToken) {
     console.log('[svag v1.2.0] getValidToken: Token chybí v storage');
@@ -128,47 +128,16 @@ async function getValidToken() {
     
     // Pokud token už vypršel, nelze ho použít
     if (expiresAt <= now) {
-      console.error('[svag v1.2.0] Token EXPIRED, cannot use');
+      console.error('[svag v1.2.0] Token EXPIRED');
       return null;
     }
     
-    // Pokud token vyprší brzy a máme refreshToken, zkusit refresh
-    if (expiresAt - now < 5 * 60 * 1000 && result.refreshToken) {
-      console.log('🔄 Token expiring soon, attempting refresh...');
-      
-      const apiUrl = result.apiUrl || 'https://svag.pro';
-      
-      const refreshedToken = await new Promise((resolve) => {
-        chrome.runtime.sendMessage({
-          action: 'refreshToken',
-          apiUrl: `${apiUrl}/api/auth/refresh`,
-          refreshToken: result.refreshToken
-        }, async (response) => {
-          if (chrome.runtime.lastError || !response || !response.success) {
-            console.warn('⚠️  Token refresh failed, using original token');
-            resolve(null);
-          } else {
-            await chrome.storage.sync.set({
-              apiToken: response.token,
-              refreshToken: response.refreshToken
-            });
-            console.log('✅ Token refreshed successfully');
-            resolve(response.token);
-          }
-        });
-      });
-      
-      // Pokud refresh uspěl, použít nový token, jinak původní (který ještě není expired)
-      return refreshedToken || result.apiToken;
-    }
-    
-    // Token je validní a není třeba refresh
-    console.log('[svag v1.2.0] Token is valid, no refresh needed');
+    // Token je validní
+    console.log('[svag v1.2.0] Token is valid');
     return result.apiToken;
     
   } catch (error) {
     console.error('[svag v1.2.0] Error processing token:', error);
-    console.error('[svag v1.2.0] Token value:', result.apiToken?.substring(0, 20) + '...');
     return null;
   }
 }
@@ -1774,50 +1743,49 @@ async function sendToGallery(cleanData, element) {
     const result = await chrome.storage.sync.get(['apiUrl']);
     const apiUrl = `${result.apiUrl || 'https://svag.pro'}/api/gallery`;
     
-    console.log('[svag v1.2.0] sendToGallery: Odesílám přes background script...');
+    console.log('[svag v1.2.0] sendToGallery: Odesílám do API...');
     
-    // OPRAVENO: Odeslat přes background script kvůli CORS
-    chrome.runtime.sendMessage({
-      action: 'saveToGallery',
-      apiUrl: apiUrl,
-      token: validToken,
-      data: {
+    // Přímý fetch (content script context umožňuje CORS s host_permissions)
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${validToken}`
+      },
+      body: JSON.stringify({
         svg: content,
         source: window.location.href,
         timestamp: new Date().toISOString(),
         name: iconName,
         size: sizeInKB
-      }
-    }, async (response) => {
-      if (chrome.runtime.lastError) {
-        console.error('[svag v1.2.0] Runtime error:', chrome.runtime.lastError);
-        showNotification('connection error', popupPosition);
-        hideActionPopup();
-      } else if (response && response.success) {
-        console.log('[svag v1.2.0] sendToGallery: Úspěšně uloženo do galerie');
-        showNotification('saved to gallery', popupPosition);
-        hideActionPopup();
-      } else if (response && response.status === 401) {
-        // Token není validní - vyžaduje re-login
-        console.error('[svag v1.2.0] Gallery API error 401: Unauthorized - please re-login');
-        showNotification('not logged in - please re-login', popupPosition);
-        chrome.runtime.sendMessage({ action: 'openPopup' });
-        hideActionPopup();
-      } else if (response && response.status === 400) {
-        // Zkontrolovat, zda je to limit error
-        if (response.error && response.error.error === 'Icon limit reached' && response.error.tier === 'free') {
-          showNotification('⚠️ Limit dosažen! Upgradujte na Pro pro 1000 ikon ($9.99/měsíc)', popupPosition);
-        } else {
-          console.error('[svag v1.2.0] Gallery API error 400:', response.error);
-          showNotification('save failed', popupPosition);
-        }
-        hideActionPopup();
-      } else {
-        console.error('[svag v1.2.0] Gallery API error:', response);
-        showNotification('save failed', popupPosition);
-        hideActionPopup();
-      }
+      })
     });
+    
+    if (response.ok) {
+      console.log('[svag v1.2.0] sendToGallery: Úspěšně uloženo do galerie');
+      showNotification('saved to gallery', popupPosition);
+      hideActionPopup();
+    } else if (response.status === 401) {
+      // Token není validní - vyžaduje re-login
+      console.error('[svag v1.2.0] Gallery API error 401: Unauthorized - please re-login');
+      showNotification('not logged in - please re-login', popupPosition);
+      chrome.runtime.sendMessage({ action: 'openPopup' });
+      hideActionPopup();
+    } else if (response.status === 400) {
+      // Zkontrolovat, zda je to limit error
+      const errorData = await response.json();
+      if (errorData.error === 'Icon limit reached' && errorData.tier === 'free') {
+        showNotification('⚠️ Limit dosažen! Upgradujte na Pro pro 1000 ikon ($9.99/měsíc)', popupPosition);
+      } else {
+        console.error('[svag v1.2.0] Gallery API error 400:', errorData);
+        showNotification('save failed', popupPosition);
+      }
+      hideActionPopup();
+    } else {
+      console.error('[svag v1.2.0] Gallery API error:', response.status);
+      showNotification('save failed', popupPosition);
+      hideActionPopup();
+    }
   } catch (error) {
     console.error('[svag v1.2.0] Chyba při odesílání do galerie:', error);
     showNotification('connection error', popupPosition);
