@@ -1730,8 +1730,8 @@ async function downloadSvg(cleanData, element) {
 }
 
 // NOVÉ v1.2.0: Zjednodušené odeslání do galerie (vždy máme čistý content z extractCleanSvg)
-async function sendToGallery(cleanData, element, retryCount = 0) {
-  console.log('[svag v1.2.0] sendToGallery: Začínám odesílání... (retry:', retryCount, ')');
+async function sendToGallery(cleanData, element) {
+  console.log('[svag v1.2.0] sendToGallery: Začínám odesílání...');
   console.log('[svag v1.2.0] sendToGallery: cleanData:', cleanData);
   
   if (!cleanData || typeof cleanData !== 'object') {
@@ -1798,47 +1798,9 @@ async function sendToGallery(cleanData, element, retryCount = 0) {
         showNotification('saved to gallery', popupPosition);
         hideActionPopup();
       } else if (response && response.status === 401) {
-        // Token není validní nebo uživatel není přihlášen - zkusit refresh a opakovat
-        console.error('[svag v1.2.0] Gallery API error 401: Unauthorized - attempting token refresh');
-        
-        // Prevence nekonečné smyčky - max 1 retry
-        if (retryCount >= 1) {
-          console.error('[svag v1.2.0] Max retry attempts reached, stopping to prevent infinite loop');
-          showNotification('auth failed - please re-login', popupPosition);
-          chrome.runtime.sendMessage({ action: 'openPopup' });
-          hideActionPopup();
-          return;
-        }
-        
-        // Zkusit refresh token a opakovat request
-        const storageResult = await chrome.storage.sync.get(['refreshToken', 'apiUrl']);
-        if (storageResult.refreshToken) {
-          console.log('[svag v1.2.0] Attempting to refresh token...');
-          
-          const refreshResponse = await new Promise((resolve) => {
-            chrome.runtime.sendMessage({
-              action: 'refreshToken',
-              apiUrl: `${storageResult.apiUrl || 'https://svag.pro'}/api/auth/refresh`,
-              refreshToken: storageResult.refreshToken
-            }, resolve);
-          });
-          
-          if (refreshResponse && refreshResponse.success) {
-            await chrome.storage.sync.set({
-              apiToken: refreshResponse.token,
-              refreshToken: refreshResponse.refreshToken
-            });
-            
-            // Opakovat save s novým tokenem (pouze jednou)
-            console.log('[svag v1.2.0] Token refreshed successfully, retrying gallery save...');
-            hideActionPopup();
-            return sendToGallery(cleanData, element, retryCount + 1);
-          }
-        }
-        
-        // Pokud refresh selhal nebo není dostupný
-        console.error('[svag v1.2.0] Token refresh failed or unavailable');
-        showNotification('session expired - please login', popupPosition);
+        // Token není validní - vyžaduje re-login
+        console.error('[svag v1.2.0] Gallery API error 401: Unauthorized - please re-login');
+        showNotification('not logged in - please re-login', popupPosition);
         chrome.runtime.sendMessage({ action: 'openPopup' });
         hideActionPopup();
       } else if (response && response.status === 400) {
