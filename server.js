@@ -41,32 +41,78 @@ app.use('/Gallery', express.static(join(__dirname, 'Gallery')));
 // Servírovat statické soubory z iframe složky
 app.use('/iframe', express.static(join(__dirname, 'iframe')));
 
-// Servírovat ikony
+// Debug route pro Vercel
+app.get('/debug-path', (req, res) => {
+  const fs = require('fs');
+  const path = require('path');
+  try {
+    const iconsPath = join(__dirname, 'icons');
+    const files = fs.readdirSync(iconsPath);
+    res.json({
+      __dirname,
+      iconsPath,
+      files,
+      cwd: process.cwd()
+    });
+  } catch (err) {
+    res.json({
+      error: err.message,
+      __dirname,
+      cwd: process.cwd()
+    });
+  }
+});
+
+// Servírovat ikony - s error handlingem
 app.use('/icons', express.static(join(__dirname, 'icons')));
 
 // Favicon routes - servírují PNG pro nejlepší kvalitu
 app.get('/favicon.ico', (req, res) => {
+  const iconPath = join(__dirname, 'icons', 'icon128.png');
   res.type('image/png');
   res.setHeader('Cache-Control', 'public, max-age=31536000');
-  res.sendFile(join(__dirname, 'icons', 'icon128.png'));
+  res.sendFile(iconPath, (err) => {
+    if (err) {
+      console.error('Favicon error:', err);
+      res.status(404).send('Favicon not found');
+    }
+  });
 });
 
 app.get('/favicon.png', (req, res) => {
+  const iconPath = join(__dirname, 'icons', 'icon128.png');
   res.type('image/png');
   res.setHeader('Cache-Control', 'public, max-age=31536000');
-  res.sendFile(join(__dirname, 'icons', 'icon128.png'));
+  res.sendFile(iconPath, (err) => {
+    if (err) {
+      console.error('Favicon PNG error:', err);
+      res.status(404).send('Favicon not found');
+    }
+  });
 });
 
 app.get('/favicon-32x32.png', (req, res) => {
+  const iconPath = join(__dirname, 'icons', 'icon48.png');
   res.type('image/png');
   res.setHeader('Cache-Control', 'public, max-age=31536000');
-  res.sendFile(join(__dirname, 'icons', 'icon48.png'));
+  res.sendFile(iconPath, (err) => {
+    if (err) {
+      console.error('Favicon 32x32 error:', err);
+      res.status(404).send('Favicon not found');
+    }
+  });
 });
 
 app.get('/favicon-16x16.png', (req, res) => {
+  const iconPath = join(__dirname, 'icons', 'icon16.png');
   res.type('image/png');
   res.setHeader('Cache-Control', 'public, max-age=31536000');
-  res.sendFile(join(__dirname, 'icons', 'icon16.png'));
+  res.sendFile(iconPath, (err) => {
+    if (err) {
+      console.error('Favicon 16x16 error:', err);
+      res.status(404).send('Favicon not found');
+    }
+  });
 });
 
 // Robots.txt route
