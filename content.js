@@ -93,7 +93,49 @@ function decodeSvgDataUri(dataUri) {
   return null;
 }
 
-// Helper funkce pro resolving <use> elementů s interními referencemi
+// Helper funkce pro hledání elementu v shadow DOM
+function findElementInShadowDOM(elementId) {
+  const allElements = document.querySelectorAll('*');
+  
+  for (const element of allElements) {
+    if (element.shadowRoot) {
+      try {
+        const found = element.shadowRoot.getElementById(elementId);
+        if (found) {
+          return found;
+        }
+        
+        // Rekurzivně hledat ve vnořených shadow roots
+        const nestedSearch = findInShadowRootRecursive(element.shadowRoot, elementId);
+        if (nestedSearch) {
+          return nestedSearch;
+        }
+      } catch (error) {
+        console.debug('[svag] Cannot access shadow root:', error);
+      }
+    }
+  }
+  
+  return null;
+}
+
+// Rekurzivní hledání v shadow DOM
+function findInShadowRootRecursive(shadowRoot, elementId) {
+  const found = shadowRoot.getElementById(elementId);
+  if (found) return found;
+  
+  const children = shadowRoot.querySelectorAll('*');
+  for (const child of children) {
+    if (child.shadowRoot) {
+      const nested = findInShadowRootRecursive(child.shadowRoot, elementId);
+      if (nested) return nested;
+    }
+  }
+  
+  return null;
+}
+
+// Helper funkce pro resolving <use> elementů s interními referencemi (vylepšená v1.1.2)
 function resolveUseElement(useElement) {
   const href = useElement.getAttribute('href') || useElement.getAttribute('xlink:href');
   
@@ -105,12 +147,45 @@ function resolveUseElement(useElement) {
   const symbolId = href.substring(1);
   
   // Najít symbol/element podle ID v celém dokumentu
-  const referencedElement = document.getElementById(symbolId);
+  let referencedElement = document.getElementById(symbolId);
+  
+  // Pokud nenajdeme v main document, zkusit shadow DOM
+  if (!referencedElement) {
+    console.log(`[svag] Symbol "${symbolId}" not found in main document, searching shadow DOM...`);
+    referencedElement = findElementInShadowDOM(symbolId);
+  }
+  
+  // Pokud stále není nalezen, zkusit najít v defs/svg elementech
+  if (!referencedElement) {
+    console.log(`[svag] Searching for symbol "${symbolId}" in <defs> and <svg> elements...`);
+    const allDefs = document.querySelectorAll('defs, svg');
+    for (const def of allDefs) {
+      try {
+        const found = def.querySelector(`#${CSS.escape(symbolId)}`);
+        if (found) {
+          referencedElement = found;
+          console.log(`[svag] Found symbol in <defs>/<svg>`);
+          break;
+        }
+      } catch (error) {
+        // CSS.escape může selhat na některých ID
+        console.debug('[svag] Error with CSS.escape:', error);
+      }
+    }
+  }
   
   if (!referencedElement) {
-    console.warn(`[svag] Symbol/element with id "${symbolId}" not found in document`);
+    console.warn(`[svag] Symbol/element with id "${symbolId}" not found anywhere in document`);
+    // Vypsat všechny dostupné symboly pro debugging
+    const allSymbols = document.querySelectorAll('symbol');
+    if (allSymbols.length > 0) {
+      console.log(`[svag] Available symbols (${allSymbols.length}):`, 
+        Array.from(allSymbols).slice(0, 10).map(s => s.id).filter(id => id));
+    }
     return null;
   }
+  
+  console.log(`[svag] Found symbol: #${symbolId} (${referencedElement.tagName})`);
   
   // Vytvořit nový SVG element
   const parentSvg = useElement.closest('svg');
@@ -1603,8 +1678,8 @@ svgMutationObserver.observe(document.body, {
   subtree: true
 });
 
-console.log('svag extension loaded - enhanced SVG detection v1.1.1');
+console.log('svag extension loaded - enhanced SVG detection v1.1.2');
 console.log('Supported SVG types: inline, img, data-uri, object, embed, background, sprite, mask, clip-path, pseudo-elements, picture, iframe, css-cursor, css-list-style, css-border-image, css-filter, css-shape-outside, foreign-object, shadow-dom, use-resolved');
 console.log('MutationObserver: active - tracking dynamic SVG additions');
-console.log('Enhanced detection: SVG in buttons, nested elements, pointer-events:none, and pseudo-elements');
+console.log('Enhanced detection: SVG in buttons, nested elements, pointer-events:none, pseudo-elements, and shadow DOM symbols');
 
