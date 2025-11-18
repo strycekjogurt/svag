@@ -72,10 +72,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     (async () => {
       try {
         console.log('[background] saveToGallery: Odesílám do API...');
+        console.log('[background] API URL:', request.apiUrl);
         console.log(`[background] Token length: ${request.token ? request.token.length : 'null'}`);
         if (request.token) {
-          console.log(`[background] Token start: ${request.token.substring(0, 10)}...`);
+          console.log(`[background] Token preview: ${request.token.substring(0, 20)}...${request.token.substring(request.token.length - 10)}`);
         }
+        console.log('[background] SVG size:', request.data?.svg?.length, 'chars');
+        console.log('[background] Icon name:', request.data?.name);
         
         const response = await fetch(request.apiUrl, {
           method: 'POST',
@@ -86,12 +89,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           body: JSON.stringify(request.data)
         });
         
+        console.log('[background] Response status:', response.status, response.statusText);
+        
         if (response.ok) {
-          console.log('[background] saveToGallery: Úspěšně uloženo');
+          console.log('[background] saveToGallery: Úspěšně uloženo ✅');
           sendResponse({ success: true });
         } else if (response.status === 401) {
-          console.error('[background] saveToGallery: 401 Unauthorized');
-          sendResponse({ success: false, status: 401, error: 'Unauthorized' });
+          const responseText = await response.text();
+          console.error('[background] saveToGallery: 401 Unauthorized ❌');
+          console.error('[background] Response body:', responseText);
+          sendResponse({ success: false, status: 401, error: 'Unauthorized', body: responseText });
         } else if (response.status === 400) {
           const errorData = await response.json();
           console.error('[background] saveToGallery: API error 400:', errorData);
