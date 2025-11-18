@@ -730,6 +730,11 @@ function recolorToBlack(svg) {
 
 async function loadRecentIcons(token) {
   try {
+    console.log('🔄 Loading recent icons from API...');
+    
+    // Clear icons list and show loading state
+    iconsList.innerHTML = '<div class="loading-state">Loading...</div>';
+    
     // Načíst ikony a statistiky
     const [iconsResponse, statsResponse] = await Promise.all([
       fetch(`${apiUrl}/api/gallery`, {
@@ -740,10 +745,17 @@ async function loadRecentIcons(token) {
       })
     ]);
     
+    console.log('📥 API responses:', {
+      icons: iconsResponse.status,
+      stats: statsResponse.status
+    });
+    
     if (iconsResponse.ok && statsResponse.ok) {
       const icons = await iconsResponse.json();
       const stats = await statsResponse.json();
       const totalIcons = icons.length;
+      
+      console.log(`✅ Loaded ${totalIcons} icons from API`);
       
       // Update gallery limit s dynamickým limitem z API
       limitText.textContent = `${stats.current || totalIcons}/${stats.limit || 100}`;
@@ -751,8 +763,25 @@ async function loadRecentIcons(token) {
       // Clear icons list
       iconsList.innerHTML = '';
       
-      // Display first 3 icons
-      const displayIcons = icons.slice(0, 3);
+      if (totalIcons === 0) {
+        // Žádné ikony - zobrazit prázdný stav
+        const emptyState = document.createElement('div');
+        emptyState.className = 'empty-state';
+        emptyState.innerHTML = `
+          <div style="text-align: center; padding: 20px; color: #666; font-size: 13px;">
+            <div style="font-size: 24px; margin-bottom: 8px;">📦</div>
+            <div>No icons yet</div>
+            <div style="font-size: 11px; margin-top: 4px;">Save SVGs to your gallery</div>
+          </div>
+        `;
+        iconsList.appendChild(emptyState);
+        return;
+      }
+      
+      // Display last 3 icons (newest first)
+      const displayIcons = icons.slice(-3).reverse();
+      console.log('🖼️  Displaying icons:', displayIcons.map(i => i.name || 'unnamed'));
+      
       displayIcons.forEach(icon => {
         const iconItem = document.createElement('div');
         iconItem.className = 'icon-item';
@@ -788,10 +817,48 @@ async function loadRecentIcons(token) {
         iconsList.appendChild(moreItem);
       }
     } else {
-      console.error('Failed to load icons');
+      // API error - zobrazit error stav
+      console.error('❌ Failed to load icons:', {
+        iconsStatus: iconsResponse.status,
+        statsStatus: statsResponse.status
+      });
+      
+      iconsList.innerHTML = '';
+      const errorState = document.createElement('div');
+      errorState.className = 'error-state';
+      errorState.innerHTML = `
+        <div style="text-align: center; padding: 20px; color: #d32f2f; font-size: 13px;">
+          <div style="font-size: 24px; margin-bottom: 8px;">⚠️</div>
+          <div>Failed to load icons</div>
+          <div style="font-size: 11px; margin-top: 4px; color: #666;">
+            ${iconsResponse.status === 401 ? 'Please re-login' : 'Try again later'}
+          </div>
+        </div>
+      `;
+      errorState.addEventListener('click', () => {
+        if (iconsResponse.status === 401) {
+          showLoginForm();
+        } else {
+          chrome.tabs.create({ url: `${apiUrl}/gallery` });
+        }
+      });
+      iconsList.appendChild(errorState);
     }
   } catch (error) {
-    console.error('Error loading icons:', error);
+    console.error('❌ Error loading icons:', error);
+    
+    // Network error - zobrazit error stav
+    iconsList.innerHTML = '';
+    const errorState = document.createElement('div');
+    errorState.className = 'error-state';
+    errorState.innerHTML = `
+      <div style="text-align: center; padding: 20px; color: #d32f2f; font-size: 13px;">
+        <div style="font-size: 24px; margin-bottom: 8px;">🔌</div>
+        <div>Connection error</div>
+        <div style="font-size: 11px; margin-top: 4px; color: #666;">Check your internet</div>
+      </div>
+    `;
+    iconsList.appendChild(errorState);
   }
 }
 
