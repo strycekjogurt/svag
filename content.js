@@ -191,6 +191,10 @@ function resolveUseElement(useElement) {
   const parentSvg = useElement.closest('svg');
   const newSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   
+  // NOVÉ: Přidat XML namespace definice (oprava xlink:href error)
+  newSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  newSvg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+  
   // Zkopírovat důležité atributy z původního SVG
   if (parentSvg) {
     ['viewBox', 'width', 'height', 'preserveAspectRatio'].forEach(attr => {
@@ -218,6 +222,29 @@ function resolveUseElement(useElement) {
     });
   }
   
+  // NOVÉ: Najít a zkopírovat <style> elementy z dokumentu (oprava chybějících CSS)
+  const stylesToCopy = [];
+  
+  // Hledat v parent SVG (může obsahovat <defs> se styly)
+  if (parentSvg) {
+    const parentStyles = parentSvg.querySelectorAll('style');
+    parentStyles.forEach(style => stylesToCopy.push(style.cloneNode(true)));
+  }
+  
+  // Hledat v dokumentu (globální <defs> nebo <svg> se styly)
+  const documentSvgs = document.querySelectorAll('svg');
+  documentSvgs.forEach(svg => {
+    const styles = svg.querySelectorAll('style');
+    styles.forEach(style => {
+      // Zkontrolovat, jestli už nemáme tento styl
+      const styleContent = style.textContent;
+      const alreadyHas = stylesToCopy.some(s => s.textContent === styleContent);
+      if (!alreadyHas) {
+        stylesToCopy.push(style.cloneNode(true));
+      }
+    });
+  });
+  
   // Zkopírovat obsah referencovaného elementu
   if (tagName === 'symbol') {
     // Symbol - zkopírovat jeho vnitřní obsah
@@ -228,6 +255,14 @@ function resolveUseElement(useElement) {
   } else {
     // Fallback - zkusit zkopírovat obsah
     newSvg.innerHTML = referencedElement.innerHTML || referencedElement.outerHTML;
+  }
+  
+  // NOVÉ: Vložit zkopírované <style> elementy na začátek SVG
+  if (stylesToCopy.length > 0) {
+    const defsElement = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+    stylesToCopy.forEach(style => defsElement.appendChild(style));
+    newSvg.insertBefore(defsElement, newSvg.firstChild);
+    console.log(`[svag] Zkopírováno ${stylesToCopy.length} <style> elementů`);
   }
   
   // Zkopírovat inline styly z <use> nebo parent <svg> (fill, stroke, atd.)
@@ -241,17 +276,23 @@ function resolveUseElement(useElement) {
     if (fill.startsWith('var(')) {
       const computedFill = useStyles.fill;
       if (computedFill && computedFill !== 'rgb(0, 0, 0)') {
-        newSvg.setAttribute('fill', computedFill);
+        // OPRAVA: Ošetřit případný dvojitý # (##ff0000 -> #ff0000)
+        const cleanFill = computedFill.replace(/^#+/, '#');
+        newSvg.setAttribute('fill', cleanFill);
       }
     } else {
-      newSvg.setAttribute('fill', fill);
+      // OPRAVA: Ošetřit případný dvojitý # (##ff0000 -> #ff0000)
+      const cleanFill = fill.replace(/^#+/, '#');
+      newSvg.setAttribute('fill', cleanFill);
     }
   }
   
   // Aplikovat stroke pokud je definovaný
   const stroke = useStyles.stroke || (parentStyles && parentStyles.stroke);
   if (stroke && stroke !== 'none') {
-    newSvg.setAttribute('stroke', stroke);
+    // OPRAVA: Ošetřit případný dvojitý #
+    const cleanStroke = stroke.replace(/^#+/, '#');
+    newSvg.setAttribute('stroke', cleanStroke);
   }
   
   console.log(`[svag] Resolved <use> reference: #${symbolId}`);
@@ -1718,11 +1759,12 @@ svgMutationObserver.observe(document.body, {
   subtree: true
 });
 
-console.log('svag extension loaded - enhanced SVG detection v1.1.4');
+console.log('svag extension loaded - enhanced SVG detection v1.1.5');
 console.log('Supported SVG types: inline, img, data-uri, object, embed, background, sprite, mask, clip-path, pseudo-elements, picture, iframe, css-cursor, css-list-style, css-border-image, css-filter, css-shape-outside, foreign-object, shadow-dom, use-resolved');
 console.log('MutationObserver: active - tracking dynamic SVG additions');
-console.log('🔧 KRITICKÁ OPRAVA v1.1.4:');
-console.log('  ✅ getSvgData() nyní detekuje <use> elementy uvnitř SVG a resolvuje je');
-console.log('  ✅ extractIconName() preferuje data-dssvgid a data-* atributy');
-console.log('  ✅ Správné pojmenování ikon podle data atributů, ne podle wrapperu');
+console.log('🔧 KRITICKÉ OPRAVY v1.1.5:');
+console.log('  ✅ Přidány XML namespace definice (xmlns, xmlns:xlink) - oprava xlink:href error');
+console.log('  ✅ Kopírování <style> elementů z dokumentu - oprava chybějících CSS tříd');
+console.log('  ✅ Oprava dvojitého ## v fill/stroke atributech');
+console.log('  ✅ Kompletní funkční SVG se všemi styly a namespaces');
 

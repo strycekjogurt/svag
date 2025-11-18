@@ -1,8 +1,42 @@
-# Kompletní detekce SVG v1.1.4
+# Kompletní detekce SVG v1.1.5
 
 ## Přehled změn
 
-### 🔧 v1.1.4 - KRITICKÁ OPRAVA (Aktuální verze)
+### 🔧 v1.1.5 - KRITICKÁ OPRAVA (Aktuální verze)
+
+**Problém #3:** Stažené SVG obsahovalo chyby:
+- ❌ `Namespace prefix xlink for href on use is not defined` error
+- ❌ CSS třídy bez stylů (např. `class="c4 b20"` ale chybí `<style>` definice)
+- ❌ Neplatný fill atribut: `fill="##f"` (dvojitý `#`)
+
+**Řešení:**
+
+1. **XML Namespace definice:**
+   ```javascript
+   newSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+   newSvg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+   ```
+
+2. **Kopírování `<style>` elementů:**
+   - Hledá `<style>` elementy v parent SVG
+   - Hledá `<style>` elementy v celém dokumentu
+   - Deduplikuje a kopíruje do `<defs>` nového SVG
+   - Debug log: `"Zkopírováno N <style> elementů"`
+
+3. **Oprava dvojitého `##`:**
+   ```javascript
+   const cleanFill = fill.replace(/^#+/, '#'); // ##ff0000 -> #ff0000
+   ```
+
+**Výsledek:**
+- ✅ Žádné xlink:href errory
+- ✅ CSS třídy fungují (styly jsou součástí SVG)
+- ✅ Validní fill atributy (jen jeden `#`)
+- ✅ Kompletní, samostatné, funkční SVG soubory!
+
+---
+
+### 🔧 v1.1.4 - Detekce <use> a pojmenování
 
 **Problém #2:** Extension stále stahovala celý modul a nerozpoznávala `<use>` elementy uvnitř SVG. Soubory byly pojmenovány podle className wrapperu (např. "module.svg") místo podle data atributů ikony.
 
