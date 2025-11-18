@@ -809,13 +809,27 @@ async function loadRecentIcons(token) {
     // Clear icons list and show loading state
     iconsList.innerHTML = '<div class="loading-state">Loading...</div>';
     
+    // Debug request details
+    console.log('📍 API URL:', apiUrl);
+    console.log('📤 Sending request with Authorization header');
+    
     // Načíst ikony přímo z API (jako před synchronizací)
     const [iconsResponse, statsResponse] = await Promise.all([
       fetch(`${apiUrl}/api/gallery`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        method: 'GET',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
       }),
       fetch(`${apiUrl}/api/gallery/stats`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        method: 'GET',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
       })
     ]);
     
