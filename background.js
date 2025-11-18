@@ -39,6 +39,40 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     });
   }
   
+  // Handler pro save to gallery - musí jít přes background kvůli CORS
+  if (request.action === 'saveToGallery') {
+    (async () => {
+      try {
+        console.log('[background] saveToGallery: Odesílám do API...');
+        
+        const response = await fetch(request.apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${request.token}`
+          },
+          body: JSON.stringify(request.data)
+        });
+        
+        if (response.ok) {
+          console.log('[background] saveToGallery: Úspěšně uloženo');
+          sendResponse({ success: true });
+        } else if (response.status === 400) {
+          const errorData = await response.json();
+          console.error('[background] saveToGallery: API error 400:', errorData);
+          sendResponse({ success: false, status: 400, error: errorData });
+        } else {
+          console.error('[background] saveToGallery: API error:', response.status);
+          sendResponse({ success: false, status: response.status, statusText: response.statusText });
+        }
+      } catch (error) {
+        console.error('[background] saveToGallery: Fetch error:', error);
+        sendResponse({ success: false, error: error.message });
+      }
+    })();
+    return true; // Async response
+  }
+  
   // ===== SYNCHRONIZACE PŘIHLÁŠENÍ S GALERIÍ =====
   if (request.action === 'syncLogin') {
     // Galerie se přihlásila - synchronizovat do extension

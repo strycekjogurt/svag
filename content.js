@@ -1653,50 +1653,51 @@ async function sendToGallery(cleanData, element) {
   }
   
   try {
-    // Získat API URL - OPRAVENO: použití Promise místo callbacku
+    // Získat API URL
     const result = await chrome.storage.sync.get(['apiUrl']);
+    const apiUrl = `${result.apiUrl || 'https://svag.pro'}/api/gallery`;
     
-    console.log('[svag v1.2.0] sendToGallery: Odesílám do API...');
+    console.log('[svag v1.2.0] sendToGallery: Odesílám přes background script...');
     
-    // Odeslat do API
-    const response = await fetch(`${result.apiUrl || 'https://svag.pro'}/api/gallery`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${validToken}`
-      },
-      body: JSON.stringify({
+    // OPRAVENO: Odeslat přes background script kvůli CORS
+    chrome.runtime.sendMessage({
+      action: 'saveToGallery',
+      apiUrl: apiUrl,
+      token: validToken,
+      data: {
         svg: content,
         source: window.location.href,
         timestamp: new Date().toISOString(),
         name: iconName,
         size: sizeInKB
-      })
-    });
-    
-    if (response.ok) {
-      console.log('[svag v1.2.0] sendToGallery: Úspěšně uloženo do galerie');
-      showNotification('saved to gallery', popupPosition);
-    } else if (response.status === 400) {
-      // Zkontrolovat, zda je to limit error
-      const errorData = await response.json();
-      if (errorData.error === 'Icon limit reached' && errorData.tier === 'free') {
-        showNotification('⚠️ Limit dosažen! Upgradujte na Pro pro 1000 ikon ($9.99/měsíc)', popupPosition);
+      }
+    }, (response) => {
+      if (chrome.runtime.lastError) {
+        console.error('[svag v1.2.0] Runtime error:', chrome.runtime.lastError);
+        showNotification('connection error', popupPosition);
+      } else if (response && response.success) {
+        console.log('[svag v1.2.0] sendToGallery: Úspěšně uloženo do galerie');
+        showNotification('saved to gallery', popupPosition);
+      } else if (response && response.status === 400) {
+        // Zkontrolovat, zda je to limit error
+        if (response.error && response.error.error === 'Icon limit reached' && response.error.tier === 'free') {
+          showNotification('⚠️ Limit dosažen! Upgradujte na Pro pro 1000 ikon ($9.99/měsíc)', popupPosition);
+        } else {
+          console.error('[svag v1.2.0] Gallery API error 400:', response.error);
+          showNotification('save failed', popupPosition);
+        }
       } else {
-        console.error('[svag v1.2.0] Gallery API error 400:', errorData);
+        console.error('[svag v1.2.0] Gallery API error:', response);
         showNotification('save failed', popupPosition);
       }
-    } else {
-      console.error('[svag v1.2.0] Gallery API error:', response.status, response.statusText);
-      showNotification('save failed', popupPosition);
-    }
+      
+      hideActionPopup();
+    });
   } catch (error) {
     console.error('[svag v1.2.0] Chyba při odesílání do galerie:', error);
     showNotification('connection error', popupPosition);
+    hideActionPopup();
   }
-  
-  // OPRAVENO: hideActionPopup() se volá AŽ PO dokončení fetch
-  hideActionPopup();
 }
 
 // Notifikace
