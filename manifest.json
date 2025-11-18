@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "svag",
-  "version": "1.0.0",
-  "description": "Stahování a správa SVG ikon z webových stránek",
+  "version": "2.0.0",
+  "description": "Stahování a správa SVG ikon z webových stránek - vylepšená detekce všech SVG typů",
   "permissions": [
     "activeTab",
     "downloads",
