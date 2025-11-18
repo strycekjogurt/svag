@@ -46,18 +46,26 @@ app.use('/icons', express.static(join(__dirname, 'icons')));
 
 // Favicon routes - servírují PNG pro nejlepší kvalitu
 app.get('/favicon.ico', (req, res) => {
+  res.type('image/png');
+  res.setHeader('Cache-Control', 'public, max-age=31536000');
   res.sendFile(join(__dirname, 'icons', 'icon128.png'));
 });
 
 app.get('/favicon.png', (req, res) => {
+  res.type('image/png');
+  res.setHeader('Cache-Control', 'public, max-age=31536000');
   res.sendFile(join(__dirname, 'icons', 'icon128.png'));
 });
 
 app.get('/favicon-32x32.png', (req, res) => {
+  res.type('image/png');
+  res.setHeader('Cache-Control', 'public, max-age=31536000');
   res.sendFile(join(__dirname, 'icons', 'icon48.png'));
 });
 
 app.get('/favicon-16x16.png', (req, res) => {
+  res.type('image/png');
+  res.setHeader('Cache-Control', 'public, max-age=31536000');
   res.sendFile(join(__dirname, 'icons', 'icon16.png'));
 });
 
