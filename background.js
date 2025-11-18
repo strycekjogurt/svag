@@ -74,6 +74,58 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true; // Async response
   }
   
+  // Handler pro fetch gallery icons z popup
+  if (request.action === 'fetchGalleryIcons') {
+    (async () => {
+      try {
+        console.log('[background] fetchGalleryIcons: Fetching icons...');
+        
+        const response = await fetch(request.apiUrl, {
+          headers: { 'Authorization': `Bearer ${request.token}` }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`[background] fetchGalleryIcons: Loaded ${data.length} icons`);
+          sendResponse({ success: true, status: response.status, data });
+        } else {
+          console.error('[background] fetchGalleryIcons: Error', response.status);
+          sendResponse({ success: false, status: response.status });
+        }
+      } catch (error) {
+        console.error('[background] fetchGalleryIcons: Fetch error:', error);
+        sendResponse({ success: false, error: error.message });
+      }
+    })();
+    return true; // Async response
+  }
+  
+  // Handler pro fetch gallery stats z popup
+  if (request.action === 'fetchGalleryStats') {
+    (async () => {
+      try {
+        console.log('[background] fetchGalleryStats: Fetching stats...');
+        
+        const response = await fetch(request.apiUrl, {
+          headers: { 'Authorization': `Bearer ${request.token}` }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('[background] fetchGalleryStats: Stats loaded');
+          sendResponse({ success: true, status: response.status, data });
+        } else {
+          console.error('[background] fetchGalleryStats: Error', response.status);
+          sendResponse({ success: false, status: response.status });
+        }
+      } catch (error) {
+        console.error('[background] fetchGalleryStats: Fetch error:', error);
+        sendResponse({ success: false, error: error.message });
+      }
+    })();
+    return true; // Async response
+  }
+  
   // Handler pro save to gallery - musí jít přes background kvůli CORS
   if (request.action === 'saveToGallery') {
     (async () => {
