@@ -1730,8 +1730,8 @@ async function downloadSvg(cleanData, element) {
 }
 
 // NOVÉ v1.2.0: Zjednodušené odeslání do galerie (vždy máme čistý content z extractCleanSvg)
-async function sendToGallery(cleanData, element) {
-  console.log('[svag v1.2.0] sendToGallery: Začínám odesílání...');
+async function sendToGallery(cleanData, element, retryCount = 0) {
+  console.log('[svag v1.2.0] sendToGallery: Začínám odesílání... (retry:', retryCount, ')');
   console.log('[svag v1.2.0] sendToGallery: cleanData:', cleanData);
   
   if (!cleanData || typeof cleanData !== 'object') {
@@ -1801,6 +1801,15 @@ async function sendToGallery(cleanData, element) {
         // Token není validní nebo uživatel není přihlášen - zkusit refresh a opakovat
         console.error('[svag v1.2.0] Gallery API error 401: Unauthorized - attempting token refresh');
         
+        // Prevence nekonečné smyčky - max 1 retry
+        if (retryCount >= 1) {
+          console.error('[svag v1.2.0] Max retry attempts reached, stopping to prevent infinite loop');
+          showNotification('auth failed - please re-login', popupPosition);
+          chrome.runtime.sendMessage({ action: 'openPopup' });
+          hideActionPopup();
+          return;
+        }
+        
         // Zkusit refresh token a opakovat request
         const storageResult = await chrome.storage.sync.get(['refreshToken', 'apiUrl']);
         if (storageResult.refreshToken) {
@@ -1820,10 +1829,10 @@ async function sendToGallery(cleanData, element) {
               refreshToken: refreshResponse.refreshToken
             });
             
-            // Opakovat save s novým tokenem
+            // Opakovat save s novým tokenem (pouze jednou)
             console.log('[svag v1.2.0] Token refreshed successfully, retrying gallery save...');
             hideActionPopup();
-            return sendToGallery(cleanData, element);
+            return sendToGallery(cleanData, element, retryCount + 1);
           }
         }
         

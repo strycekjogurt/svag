@@ -44,6 +44,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     (async () => {
       try {
         console.log('[background] refreshToken: Refreshing token...');
+        console.log('[background] refreshToken: API URL:', request.apiUrl);
+        console.log('[background] refreshToken: refreshToken preview:', request.refreshToken?.substring(0, 20) + '...');
         
         const response = await fetch(request.apiUrl, {
           method: 'POST',
@@ -51,13 +53,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           body: JSON.stringify({ refreshToken: request.refreshToken })
         });
         
+        console.log('[background] refreshToken: Response status:', response.status);
+        
         if (response.ok) {
           const data = await response.json();
-          console.log('[background] refreshToken: Token refreshed successfully');
+          console.log('[background] refreshToken: Token refreshed successfully ✅');
+          console.log('[background] refreshToken: New token preview:', data.token?.substring(0, 20) + '...');
           sendResponse({ success: true, token: data.token, refreshToken: data.refreshToken });
         } else {
+          const errorText = await response.text();
           console.error('[background] refreshToken: Failed to refresh token:', response.status);
-          sendResponse({ success: false, status: response.status });
+          console.error('[background] refreshToken: Error body:', errorText);
+          sendResponse({ success: false, status: response.status, error: errorText });
         }
       } catch (error) {
         console.error('[background] refreshToken: Fetch error:', error);
