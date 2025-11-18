@@ -288,43 +288,26 @@ function scanShadowRoots(element) {
   return svgs;
 }
 
-// Helper funkce pro nalezení SVG v elementu nebo jeho potomcích (vylepšená v1.1.1)
+// Helper funkce pro nalezení SVG v elementu nebo jeho potomcích (opravená v1.1.3)
 function findSvgInElement(element, mouseX, mouseY) {
   if (!element) return null;
   
-  // Případ 1: Element je už SVG nebo obsahuje SVG atributy
-  if (isSvgElement(element)) {
-    // Pokud je to SVG tag, vrátit ho přímo
-    if (element.tagName && element.tagName.toLowerCase() === 'svg') {
-      return element;
-    }
-    // Pokud element má SVG vlastnosti (background, mask, atd.), vrátit ho
+  // PRIORITA 1: Element JE přímo <svg> tag
+  if (element.tagName && element.tagName.toLowerCase() === 'svg') {
     return element;
   }
   
-  // Případ 2: SVG je parent tohoto elementu (např. klik na <use> nebo <path>)
+  // PRIORITA 2: SVG je parent tohoto elementu (např. klik na <use> nebo <path>)
   const closestSvg = element.closest('svg');
   if (closestSvg) {
     return closestSvg;
   }
   
-  // Případ 3: SVG je direct child tohoto elementu (např. button > svg)
-  const svgChild = element.querySelector('svg');
-  if (svgChild) {
-    return svgChild;
-  }
-  
-  // Případ 4: IMG s SVG jako child
-  const imgSvg = element.querySelector('img[src*=".svg"], img[src^="data:image/svg"]');
-  if (imgSvg) {
-    return imgSvg;
-  }
-  
-  // NOVÉ: Případ 5: Použít elementFromPoint pro přesnější detekci
-  // (ignoruje pointer-events: none a najde překryté elementy)
+  // PRIORITA 3: Použít elementFromPoint pro NEJPŘESNĚJŠÍ detekci
+  // (najde element přímo pod kurzorem, ignoruje pointer-events)
   if (mouseX !== undefined && mouseY !== undefined) {
     try {
-      // Dočasně skrýt current element pro detekci pod ním
+      // Dočasně skrýt current element
       const originalPointerEvents = element.style.pointerEvents;
       element.style.pointerEvents = 'none';
       
@@ -352,7 +335,19 @@ function findSvgInElement(element, mouseX, mouseY) {
     }
   }
   
-  // Případ 6: Hledat SVG v siblings (sourozence)
+  // PRIORITA 4: SVG je direct child tohoto elementu (např. button > svg)
+  const svgChild = element.querySelector('svg');
+  if (svgChild) {
+    return svgChild;
+  }
+  
+  // PRIORITA 5: IMG s SVG jako child
+  const imgSvg = element.querySelector('img[src*=".svg"], img[src^="data:image/svg"]');
+  if (imgSvg) {
+    return imgSvg;
+  }
+  
+  // PRIORITA 6: Hledat SVG v siblings (sourozence)
   try {
     const parent = element.parentElement;
     if (parent) {
@@ -368,7 +363,7 @@ function findSvgInElement(element, mouseX, mouseY) {
     console.debug('[svag] Error searching siblings:', error);
   }
   
-  // Případ 7: Hledat jakýkoliv element s SVG vlastnostmi v children
+  // PRIORITA 7: Hledat jakýkoliv SVG element v children (rekurzivně)
   try {
     const allChildren = element.querySelectorAll('*');
     // Omezit na prvních 50 elementů pro performance
@@ -377,12 +372,16 @@ function findSvgInElement(element, mouseX, mouseY) {
       if (child.tagName && child.tagName.toLowerCase() === 'svg') {
         return child;
       }
-      if (isSvgElement(child)) {
-        return child;
-      }
     }
   } catch (error) {
     console.debug('[svag] Error searching for SVG in children:', error);
+  }
+  
+  // PRIORITA 8: Teprve teď zkontrolovat isSvgElement() pro elementy s SVG vlastnostmi
+  // (background, mask, atd.) - POUZE pokud jsme nenašli skutečný SVG element
+  if (isSvgElement(element)) {
+    // Vrátit element s SVG vlastnostmi (background, mask, etc)
+    return element;
   }
   
   return null;
@@ -1678,8 +1677,9 @@ svgMutationObserver.observe(document.body, {
   subtree: true
 });
 
-console.log('svag extension loaded - enhanced SVG detection v1.1.2');
+console.log('svag extension loaded - enhanced SVG detection v1.1.3');
 console.log('Supported SVG types: inline, img, data-uri, object, embed, background, sprite, mask, clip-path, pseudo-elements, picture, iframe, css-cursor, css-list-style, css-border-image, css-filter, css-shape-outside, foreign-object, shadow-dom, use-resolved');
 console.log('MutationObserver: active - tracking dynamic SVG additions');
-console.log('Enhanced detection: SVG in buttons, nested elements, pointer-events:none, pseudo-elements, and shadow DOM symbols');
+console.log('OPRAVA v1.1.3: Změněna priorita detekce - nyní se stahuje konkrétní SVG ikona, ne celý wrapper/modul');
+console.log('Enhanced detection: SVG tagy mají přednost před elementy s SVG vlastnostmi');
 

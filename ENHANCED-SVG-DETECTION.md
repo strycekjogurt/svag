@@ -1,6 +1,20 @@
-# Kompletní detekce SVG v1.1
+# Kompletní detekce SVG v1.1.3
 
 ## Přehled změn
+
+### 🔧 v1.1.3 - KRITICKÁ OPRAVA (Aktuální verze)
+
+**Problém:** Extension stahovala celý modul/wrapper místo konkrétní SVG ikony.
+
+**Řešení:** Změněna priorita detekce v `findSvgInElement()`:
+- ✅ `<svg>` tagy mají nyní NEJVYŠŠÍ prioritu
+- ✅ `elementFromPoint()` zkontroluje dříve (přesnější detekce pod kurzorem)
+- ✅ `isSvgElement()` až jako FALLBACK (pro CSS-based SVG)
+- ✅ Odstraněna kontrola `isSvgElement()` z children loop (neklasifikuje wrappery jako SVG)
+
+**Výsledek:** Nyní se stahuje **konkrétní SVG ikona**, ne celý kontejner! 🎯
+
+---
 
 Tato aktualizace přináší KOMPLETNÍ podporu pro všechny moderní i pokročilé způsoby implementace SVG ikon na webových stránkách, včetně Shadow DOM, všech CSS properties, iframe, picture elementů a dynamických SVG.
 
