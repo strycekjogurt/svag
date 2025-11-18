@@ -271,24 +271,42 @@ function compileShape(sourceShape) {
     }
   });
   
-  // 3. FALLBACK: Pokud NEMÁ fill atribut, vzít z computed styles
-  if (!compiled.hasAttribute('fill') && !compiled.hasAttribute('style')) {
+  // 3. VŽDY aplikovat computed fill pokud není definovaný
+  // Zkontrolovat jestli má fill definovaný (jako atribut nebo ve style)
+  const hasFillDefined = compiled.hasAttribute('fill') || 
+                         (compiled.hasAttribute('style') && compiled.getAttribute('style').includes('fill:'));
+  
+  if (!hasFillDefined) {
     try {
       const computed = window.getComputedStyle(sourceShape);
       const fill = computed.fill;
       
-      if (fill && fill !== 'none' && fill !== 'rgb(0, 0, 0)') {
+      // Aplikovat computed fill (i když je rgb(0, 0, 0) - černá může být validní barva!)
+      if (fill && fill !== 'none') {
         // Oprava dvojitého ##
         const cleanFill = fill.replace(/^#+/, '#');
         compiled.setAttribute('fill', cleanFill);
+        console.debug(`[svag] Compiler: Aplikován computed fill: ${cleanFill}`);
+      } else {
+        // Fallback na currentColor pokud není nic definováno
+        compiled.setAttribute('fill', 'currentColor');
+        console.debug('[svag] Compiler: Aplikován fallback fill: currentColor');
       }
     } catch (error) {
       // Computed style může selhat
       console.debug('[svag] Compiler: Chyba při získávání computed style:', error);
+      // Fallback
+      compiled.setAttribute('fill', 'currentColor');
     }
   }
   
-  // 4. Pokud je to <g> (group), zkompilovat children rekurzivně
+  // 4. VŽDY odstranit class atribut (nikdy ho nepotřebujeme - způsobuje problémy)
+  if (sourceShape.hasAttribute('class')) {
+    compiled.removeAttribute('class');
+    console.debug('[svag] Compiler: Odstraněn class atribut');
+  }
+  
+  // 5. Pokud je to <g> (group), zkompilovat children rekurzivně
   if (tagName === 'g') {
     const children = sourceShape.querySelectorAll(':scope > path, :scope > circle, :scope > rect, :scope > ellipse, :scope > line, :scope > polygon, :scope > polyline, :scope > g, :scope > use');
     children.forEach(child => {
@@ -1902,14 +1920,14 @@ svgMutationObserver.observe(document.body, {
   subtree: true
 });
 
-console.log('svag extension loaded - enhanced SVG detection v1.1.8');
+console.log('svag extension loaded - enhanced SVG detection v1.1.9');
 console.log('Supported SVG types: inline, img, data-uri, object, embed, background, sprite, mask, clip-path, pseudo-elements, picture, iframe, css-cursor, css-list-style, css-border-image, css-filter, css-shape-outside, foreign-object, shadow-dom, use-resolved');
 console.log('MutationObserver: active - tracking dynamic SVG additions');
-console.log('🚀 SVG PATH COMPILER v1.1.8 - KRITICKÁ OPRAVA:');
-console.log('  ✅ EXPANDUJE <use> elementy inline - žádné xlink:href!');
-console.log('  ✅ Rekurzivní resolving všech <use> referencí');
-console.log('  ✅ Kompiluje ČISTÝ SVG přímo z shape elementů');
-console.log('  ✅ Žádné CSS třídy, žádné <use>, žádné namespace errory');
-console.log('  ✅ Podpora transform na <use> elementech');
-console.log('  🎯 Výsledek: 100% expandovaný, čistý, validní SVG!');
+console.log('🚀 SVG PATH COMPILER v1.1.9 - FINÁLNÍ OPRAVA:');
+console.log('  ✅ VŽDY aplikuje computed fill z CSS (i pro elementy s class)');
+console.log('  ✅ VŽDY odstraňuje class atributy ze všech elementů');
+console.log('  ✅ Fallback na currentColor pokud fill není definován');
+console.log('  ✅ Akceptuje i černou (rgb(0,0,0)) jako validní fill');
+console.log('  🎯 Výsledek: ČISTÝ SVG bez class, s validním fill!');
+
 

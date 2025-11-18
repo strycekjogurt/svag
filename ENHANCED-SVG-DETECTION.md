@@ -1,8 +1,77 @@
-# Kompletní detekce SVG v1.1.8
+# Kompletní detekce SVG v1.1.9
 
 ## Přehled změn
 
-### 🚀 v1.1.8 - KRITICKÁ OPRAVA COMPILERU (Aktuální verze)
+### 🚀 v1.1.9 - FINÁLNÍ OPRAVA COMPILERU (Aktuální verze)
+
+**Problém v1.1.8:** Computed fill se neaplikoval správně!
+- ❌ Podmínka `if (!fill && !style)` byla příliš striktní
+- ❌ Pokud měl element `style` atribut (i prázdný), computed fill se NEAPLIKOVAL
+- ❌ `class` atributy se NEKOPÍROVALY, ale ANI se neodstraňovaly
+- ❌ Ignorovala se černá barva `rgb(0, 0, 0)` (ale černá může být validní!)
+- ❌ Výsledek: SVG s `class="c4 b20"` ale BEZ stylů = "no style information" error
+
+**Řešení v1.1.9:** Správná logika pro computed styles!
+
+**1. Vylepšená kontrola fill:**
+```javascript
+// MÍSTO příliš striktní podmínky:
+if (!compiled.hasAttribute('fill') && !compiled.hasAttribute('style'))
+
+// NOVĚ - kontrola jestli fill SKUTEČNĚ NENÍ definovaný:
+const hasFillDefined = compiled.hasAttribute('fill') || 
+                       (compiled.hasAttribute('style') && compiled.getAttribute('style').includes('fill:'));
+
+if (!hasFillDefined) {
+  // Aplikuj computed fill
+}
+```
+
+**2. Akceptace černé barvy:**
+```javascript
+// MÍSTO ignorování černé:
+if (fill && fill !== 'none' && fill !== 'rgb(0, 0, 0)')
+
+// NOVĚ - černá je validní barva:
+if (fill && fill !== 'none') {
+  compiled.setAttribute('fill', fill.replace(/^#+/, '#'));
+}
+```
+
+**3. Fallback na currentColor:**
+```javascript
+// Pokud fill není definován vůbec:
+else {
+  compiled.setAttribute('fill', 'currentColor');
+}
+```
+
+**4. Odstranění class atributů:**
+```javascript
+// NOVĚ - VŽDY odstranit class atribut ze zkompilovaného elementu
+if (sourceShape.hasAttribute('class')) {
+  compiled.removeAttribute('class');
+  console.debug('[svag] Compiler: Odstraněn class atribut');
+}
+```
+
+**Debug logy:**
+```
+[svag] Compiler: Aplikován computed fill: rgb(255, 0, 0)
+[svag] Compiler: Odstraněn class atribut
+[svag] Compiler: Aplikován fallback fill: currentColor
+```
+
+**Výsledek:**
+- ✅ **Žádné `class` atributy** ve výsledném SVG
+- ✅ **Všechny elementy mají fill** (computed nebo currentColor)
+- ✅ **Černá je akceptována** jako validní barva
+- ✅ **Žádné "no style information" errory**
+- ✅ **100% čistý, validní, funkční SVG**
+
+---
+
+### 🚀 v1.1.8 - Compiler expanduje <use> (mělo bug s computed fill)
 
 **Problém v1.1.7:** Compiler IGNOROVAL `<use>` elementy!
 - ❌ `<use>` se nekopírovaly, zůstávaly v innerHTML
