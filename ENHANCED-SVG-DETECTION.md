@@ -1,4 +1,4 @@
-# Kompletní detekce SVG v3.0
+# Kompletní detekce SVG v1.1
 
 ## Přehled změn
 
@@ -48,13 +48,13 @@ Tato aktualizace přináší KOMPLETNÍ podporu pro všechny moderní i pokroči
 <embed type="image/svg+xml" src="icon.svg">
 ```
 
-### 7. **SVG Sprites** ✨ VYLEPŠENO v3.0
+### 7. **SVG Sprites** ✨ VYLEPŠENO v1.1
 ```html
 <!-- Externí sprite -->
 <svg><use href="sprite.svg#icon-home"></use></svg>
 <svg><use xlink:href="sprite.svg#icon-home"></use></svg>
 
-<!-- Interní use s RESOLVING symbolů - NOVÉ v3.0! -->
+<!-- Interní use s RESOLVING symbolů - NOVÉ v1.1! -->
 <svg style="display:none">
   <symbol id="icon-home" viewBox="0 0 24 24">
     <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
@@ -90,7 +90,7 @@ Tato aktualizace přináší KOMPLETNÍ podporu pro všechny moderní i pokroči
 }
 ```
 
-### 11. **Picture Element** 🆕 v3.0
+### 11. **Picture Element** 🆕 v1.1
 ```html
 <picture>
   <source srcset="icon.svg" type="image/svg+xml">
@@ -98,13 +98,13 @@ Tato aktualizace přináší KOMPLETNÍ podporu pro všechny moderní i pokroči
 </picture>
 ```
 
-### 12. **Iframe s SVG** 🆕 v3.0
+### 12. **Iframe s SVG** 🆕 v1.1
 ```html
 <iframe src="icon.svg" width="24" height="24"></iframe>
 <iframe srcdoc="<svg>...</svg>"></iframe>
 ```
 
-### 13. **CSS list-style-image** 🆕 v3.0
+### 13. **CSS list-style-image** 🆕 v1.1
 ```css
 ul li {
   list-style-image: url('bullet.svg');
@@ -113,21 +113,21 @@ ul li {
 }
 ```
 
-### 14. **CSS cursor** 🆕 v3.0
+### 14. **CSS cursor** 🆕 v1.1
 ```css
 .element {
   cursor: url('cursor.svg'), auto;
 }
 ```
 
-### 15. **CSS border-image** 🆕 v3.0
+### 15. **CSS border-image** 🆕 v1.1
 ```css
 .element {
   border-image: url('border.svg') 30 round;
 }
 ```
 
-### 16. **CSS filter** 🆕 v3.0
+### 16. **CSS filter** 🆕 v1.1
 ```css
 .element {
   filter: url('filters.svg#blur');
@@ -135,7 +135,7 @@ ul li {
 }
 ```
 
-### 17. **CSS shape-outside** 🆕 v3.0
+### 17. **CSS shape-outside** 🆕 v1.1
 ```css
 .element {
   shape-outside: url('shape.svg');
@@ -143,7 +143,7 @@ ul li {
 }
 ```
 
-### 18. **Foreign Object** 🆕 v3.0
+### 18. **Foreign Object** 🆕 v1.1
 ```html
 <svg>
   <foreignObject width="100" height="100">
@@ -152,7 +152,7 @@ ul li {
 </svg>
 ```
 
-### 19. **Shadow DOM** 🆕 v3.0
+### 19. **Shadow DOM** 🆕 v1.1
 ```javascript
 class MyIcon extends HTMLElement {
   constructor() {
@@ -164,7 +164,7 @@ class MyIcon extends HTMLElement {
 // Extension nyní skenuje i Shadow DOM!
 ```
 
-### 20. **Dynamicky vkládané SVG** 🆕 v3.0
+### 20. **Dynamicky vkládané SVG** 🆕 v1.1
 ```javascript
 // MutationObserver detekuje nově přidané SVG
 setTimeout(() => {
@@ -175,7 +175,7 @@ setTimeout(() => {
 
 ## Technické vylepšení
 
-### Nové funkce v3.0
+### Nové funkce v1.1
 
 #### `decodeSvgDataUri(dataUri)`
 Dekóduje SVG data URI do čitelného SVG kódu:
@@ -183,7 +183,7 @@ Dekóduje SVG data URI do čitelného SVG kódu:
 - Podporuje URL encoding
 - Podporuje různé charset specifikace
 
-#### `resolveUseElement(useElement)` 🆕 v3.0
+#### `resolveUseElement(useElement)` 🆕 v1.1
 **Klíčová nová funkce** pro váš use case!
 - Najde referencovaný symbol podle ID
 - Vytvoří standalone SVG s obsahem symbolu
@@ -191,10 +191,16 @@ Dekóduje SVG data URI do čitelného SVG kódu:
 - Aplikuje fill/stroke z computed styles
 - Podporuje CSS variables (var(--color))
 
-#### `scanShadowRoots(element)` 🆕 v3.0
+#### `scanShadowRoots(element)` 🆕 v1.1
 - Rekurzivně skenuje Shadow DOM
 - Najde SVG ve Web Components
 - Bezpečné zacházení s closed shadow roots
+
+#### `findSvgInElement(element)` 🆕 v1.1
+- Inteligentně hledá SVG v elementu a jeho potomcích
+- Řeší problém s SVG uvnitř buttonů
+- 5 různých scénářů vyhledávání
+- Performance optimalizace (max 50 elementů)
 
 #### Vylepšená `getSvgData(element)`
 - Detekuje **20+ typů SVG** (bylo 10)
@@ -219,7 +225,7 @@ Dekóduje SVG data URI do čitelného SVG kódu:
 - Stejná vylepšení jako u downloadSvg()
 - Konzistentní zpracování všech typů SVG
 
-#### MutationObserver 🆕 v3.0
+#### MutationObserver 🆕 v1.1
 - Sleduje dynamicky přidané SVG elementy
 - Debouncing (500ms) pro performance
 - Automatická detekce nových SVG v DOM
@@ -229,8 +235,8 @@ Dekóduje SVG data URI do čitelného SVG kódu:
 Extension nyní loguje více informací do konzole:
 
 ```javascript
-// Při načtení (v3.0)
-console.log('svag extension loaded - enhanced SVG detection v3.0');
+// Při načtení (v1.1)
+console.log('svag extension loaded - enhanced SVG detection v1.1');
 console.log('Supported SVG types: inline, img, data-uri, object, embed, background, sprite, mask, clip-path, pseudo-elements, picture, iframe, css-cursor, css-list-style, css-border-image, css-filter, css-shape-outside, foreign-object, shadow-dom, use-resolved');
 console.log('MutationObserver: active - tracking dynamic SVG additions');
 
@@ -306,11 +312,12 @@ Pro testování všech typů SVG můžete vytvořit testovací HTML soubor:
 
 ## Changelog
 
-### v3.0 (Aktuální) 🎉
+### v1.1 (Aktuální) 🎉
 **HLAVNÍ VYLEPŠENÍ:**
 - ⭐ **Resolving interních `<use>` symbolů** - váš bookmark problém vyřešen!
 - 🆕 Shadow DOM support - Web Components
 - 🆕 MutationObserver pro dynamické SVG
+- 🐛 **SVG v buttonech a nested elementech** - opraveno!
 
 **Nové SVG typy:**
 - ✨ `<picture>` element s SVG
@@ -321,28 +328,29 @@ Pro testování všech typů SVG můžete vytvořit testovací HTML soubor:
 - ✨ CSS `border-image`
 - ✨ CSS `filter` a `-webkit-filter`
 - ✨ CSS `shape-outside`
+- ✨ Data URI SVG (base64, URL-encoded)
+- ✨ `<object>` a `<embed>` elementy
+- ✨ CSS `mask` a `clip-path`
+- ✨ Pseudo-elementy (`::before`, `::after`)
+
+**Nové funkce:**
+- 🔧 `resolveUseElement()` - resolvuje interní symboly
+- 🔧 `scanShadowRoots()` - skenuje Shadow DOM
+- 🔧 `findSvgInElement()` - hledá SVG v nested elementech
+- 🔧 `decodeSvgDataUri()` - dekóduje data URI
 
 **Další vylepšení:**
-- 📊 Coverage: ~70% → **~98%** všech SVG typů
+- 📊 Coverage: **~98%** všech SVG typů
 - 🐛 Lepší console logging s [svag] prefix
 - 🚀 Performance optimalizace s debouncing
 - 📝 Kompletní dokumentace všech 20+ typů
-
-### v2.0
-- ✨ Přidána podpora pro data URI SVG
-- ✨ Přidána podpora pro `<object>` a `<embed>` elementy
-- ✨ Přidána podpora pro SVG sprites s fragmenty
-- ✨ Přidána podpora pro CSS mask a clip-path
-- ✨ Přidána podpora pro pseudo-elementy (::before, ::after)
-- 🐛 Vylepšené error handling
-- 🐛 Lepší podpora pro query parametry v URL (.svg?v=123)
-- 📝 Vylepšené konzolové logy pro debugging
+- 🎯 Detekce v buttonech a složitých strukturách
 
 ### v1.0
 - Základní podpora pro inline SVG
 - Podpora pro IMG s .svg soubory
 - Podpora pro background-image s SVG
-- Podpora pro interní `<use>` elementy
+- Základní `<use>` elementy (bez resolving symbolů)
 
 ## Další vylepšení
 
