@@ -1,8 +1,51 @@
-# Kompletní detekce SVG v1.1.9
+# Kompletní detekce SVG v1.2.0
 
 ## Přehled změn
 
-### 🚀 v1.1.9 - FINÁLNÍ OPRAVA COMPILERU (Aktuální verze)
+### 🚀 v1.2.0 - EXTRACTION LAYER REWRITE (Aktuální verze)
+
+**Kompletní přepsání extraction layeru pro jednoduchost a robustnost!**
+
+#### Co se změnilo:
+- ✅ **Odstranění starého kódu**: Odstraněny funkce `compileSvgShapes()` a `compileShape()` (188 řádků)
+- ✅ **Nové funkce**: `extractCleanSvg()` a `extractShapes()` (157 řádků) - jednodušší a čitelnější
+- ✅ **Zjednodušené funkce**: `downloadSvg()` a `sendToGallery()` - pracují s jednoduchým `{content, name}` objektem
+- ✅ **UI beze změny**: Popup, buttony, event handlers - vše funguje stejně jako předtím
+
+#### Nová architektura:
+1. **extractShapes(sourceElement)** - Extrahuje všechny shape elementy (path, circle, rect, atd.)
+   - Kopíruje geometry atributy
+   - Aplikuje computed fill z CSS
+   - Expanduje `<use>` elementy inline
+   - Podporuje rekurzivní zpracování groups
+
+2. **extractCleanSvg(svgElement)** - Hlavní funkce pro extrakci čistého SVG
+   - Vytvoří nový čistý `<svg>` element
+   - Přidá xmlns namespaces
+   - Získá viewBox (z SVG nebo symbolu)
+   - Zavolá `extractShapes()` pro získání shapes
+   - Vrátí `{content: string, name: string}`
+
+#### Klíčové principy:
+- **Jednoduchost**: Dvě hlavní funkce místo 10+ pomocných funkcí
+- **Computed styles**: VŽDY aplikovat computed fill/stroke
+- **Žádné třídy**: NIKDY nekopírovat class atributy
+- **Expandovat use**: VŽDY vyřešit `<use>` elementy inline
+- **Fallback**: Použít currentColor jako fallback pro fill
+
+#### Testování:
+- Vytvořen testovací soubor `svg-test-cases.html` s 20 reálnými příklady
+- Testováno: buttony, selecty, menu items, nested SVG, sprite systémy, CSS třídy, CSS proměnné
+
+#### Výsledek:
+- 🎯 **Čistější kód** - o 31 řádků méně, lepší čitelnost
+- 🎯 **Robustnější** - pokrývá všechny use cases systematicky
+- 🎯 **100% čistý SVG** - bez class atributů, s validním fill
+- 🎯 **Žádné XML errory** - správné namespaces, validní struktura
+
+---
+
+### 🚀 v1.1.9 - FINÁLNÍ OPRAVA COMPILERU
 
 **Problém v1.1.8:** Computed fill se neaplikoval správně!
 - ❌ Podmínka `if (!fill && !style)` byla příliš striktní

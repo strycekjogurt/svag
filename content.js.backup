@@ -135,201 +135,194 @@ function findInShadowRootRecursive(shadowRoot, elementId) {
   return null;
 }
 
-// === NOVÝ EXTRACTION LAYER v1.2.0 ===
-// Zjednodušený systém pro extrakci čistého SVG bez závislosti na CSS třídách
-
-/**
- * Extrahuje všechny shape elementy ze zdrojového elementu a vytvoří čisté kopie
- * @param {Element} sourceElement - Element obsahující SVG shapes
- * @returns {Array<Element>} Pole čistých SVG elementů
- */
-function extractShapes(sourceElement) {
-  const shapes = [];
-  const shapeTypes = ['path', 'circle', 'rect', 'ellipse', 'line', 'polygon', 'polyline', 'g'];
+// SVG Compiler - kompiluje čistý SVG z shape elementů (NOVÉ v1.1.7, opraveno v1.1.8)
+function compileSvgShapes(sourceElement) {
+  const compiledShapes = [];
   
-  // Najdi všechny shape elementy
-  const elements = sourceElement.querySelectorAll(shapeTypes.join(', '));
+  // Najít všechny shape elementy, groups A <use> elementy
+  const shapes = sourceElement.querySelectorAll('path, circle, rect, ellipse, line, polygon, polyline, g, use');
   
-  elements.forEach(el => {
-    const tagName = el.tagName.toLowerCase();
-    const newEl = document.createElementNS('http://www.w3.org/2000/svg', tagName);
-    
-    // Geometry atributy podle typu elementu
-    const geometryAttrs = {
-      'path': ['d'],
-      'circle': ['cx', 'cy', 'r'],
-      'rect': ['x', 'y', 'width', 'height', 'rx', 'ry'],
-      'ellipse': ['cx', 'cy', 'rx', 'ry'],
-      'line': ['x1', 'y1', 'x2', 'y2'],
-      'polygon': ['points'],
-      'polyline': ['points'],
-      'g': [] // Group nemá geometry atributy
-    };
-    
-    // Zkopírovat geometry atributy
-    (geometryAttrs[tagName] || []).forEach(attr => {
-      if (el.hasAttribute(attr)) {
-        newEl.setAttribute(attr, el.getAttribute(attr));
+  shapes.forEach(shape => {
+    // Kompilovat pouze top-level elementy (ne children <g>)
+    // Pokud je element child nějakého <g>, přeskočit (bude zpracován rekurzivně)
+    const parentG = shape.parentElement?.closest('g');
+    if (!parentG || !sourceElement.contains(parentG) || parentG === sourceElement) {
+      const compiled = compileShape(shape);
+      if (compiled) {
+        // compileShape může vrátit pole (když expanduje <use>)
+        if (Array.isArray(compiled)) {
+          compiledShapes.push(...compiled);
+        } else {
+          compiledShapes.push(compiled);
+        }
       }
-    });
-    
-    // Zkopírovat transform pokud existuje
-    if (el.hasAttribute('transform')) {
-      newEl.setAttribute('transform', el.getAttribute('transform'));
     }
-    
-    // Zkopírovat stroke atributy pokud existují
-    const strokeAttrs = ['stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin', 
-                         'stroke-dasharray', 'stroke-dashoffset', 'stroke-miterlimit'];
-    strokeAttrs.forEach(attr => {
-      if (el.hasAttribute(attr)) {
-        newEl.setAttribute(attr, el.getAttribute(attr));
-      }
-    });
-    
-    // Aplikovat computed fill - VŽDY
-    try {
-      const computed = window.getComputedStyle(el);
-      const fill = computed.fill;
-      
-      if (fill && fill !== 'none') {
-        // Vyčistit fill hodnotu (odstranit duplicitní #)
-        const cleanFill = fill.replace(/^#+/, '#');
-        newEl.setAttribute('fill', cleanFill);
-        console.debug(`[svag v1.2.0] extractShapes: Aplikován computed fill: ${cleanFill}`);
-      } else {
-        // Fallback na currentColor
-        newEl.setAttribute('fill', 'currentColor');
-        console.debug('[svag v1.2.0] extractShapes: Aplikován fallback fill: currentColor');
-      }
-    } catch (error) {
-      console.debug('[svag v1.2.0] extractShapes: Chyba při získávání computed style:', error);
-      newEl.setAttribute('fill', 'currentColor');
-    }
-    
-    // Pokud je to group, zpracovat children rekurzivně
-    if (tagName === 'g') {
-      const childShapes = extractShapes(el);
-      childShapes.forEach(child => newEl.appendChild(child));
-    }
-    
-    shapes.push(newEl);
   });
   
-  // Handle <use> elements - expandovat je inline
-  const useElements = sourceElement.querySelectorAll('use');
-  useElements.forEach(useEl => {
-    const href = useEl.getAttribute('href') || useEl.getAttribute('xlink:href');
+  return compiledShapes;
+}
+
+// Kompiluje jednotlivý shape element (opraveno v1.1.8 - podpora <use>)
+function compileShape(sourceShape) {
+  const tagName = sourceShape.tagName.toLowerCase();
+  
+  // NOVÉ v1.1.8: Speciální handling pro <use> elementy
+  // Místo kopírování <use>, EXPANDUJEME ho na konkrétní obsah
+  if (tagName === 'use') {
+    console.log('[svag] Compiler: Našel jsem <use> element, expanduji...');
+    
+    const href = sourceShape.getAttribute('href') || sourceShape.getAttribute('xlink:href');
     if (href && href.startsWith('#')) {
       const symbolId = href.substring(1);
       
       // Najít referencovaný element
-      let symbol = document.getElementById(symbolId);
+      let referencedElement = document.getElementById(symbolId);
       
-      // Zkusit shadow DOM pokud nenalezen
-      if (!symbol) {
-        symbol = findElementInShadowDOM(symbolId);
+      if (!referencedElement) {
+        // Zkusit v shadow DOM
+        referencedElement = findElementInShadowDOM(symbolId);
       }
       
-      // Zkusit v <defs>
-      if (!symbol) {
+      if (!referencedElement) {
+        // Zkusit v <defs>
         const allDefs = document.querySelectorAll('defs, svg');
         for (const def of allDefs) {
           try {
             const found = def.querySelector(`#${CSS.escape(symbolId)}`);
             if (found) {
-              symbol = found;
+              referencedElement = found;
               break;
             }
           } catch (error) {
-            console.debug('[svag v1.2.0] extractShapes: Error with CSS.escape:', error);
+            console.debug('[svag] Compiler: Error with CSS.escape:', error);
           }
         }
       }
       
-      if (symbol) {
-        console.log(`[svag v1.2.0] extractShapes: Expanduji <use> → #${symbolId}`);
+      if (referencedElement) {
+        console.log(`[svag] Compiler: Expanduji <use> → #${symbolId}`);
         
-        // Rekurzivně extrahovat shapes ze symbolu
-        const expandedShapes = extractShapes(symbol);
+        // Zkompilovat obsah referencovaného elementu
+        const expandedShapes = compileSvgShapes(referencedElement);
         
-        // Aplikovat transform z <use> pokud existuje
-        const useTransform = useEl.getAttribute('transform');
+        // Aplikovat transform z <use> na expandované shapes (pokud existuje)
+        const useTransform = sourceShape.getAttribute('transform');
         if (useTransform && expandedShapes.length > 0) {
           // Zabalit do <g> s transform
           const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
           g.setAttribute('transform', useTransform);
           expandedShapes.forEach(shape => g.appendChild(shape));
-          shapes.push(g);
-        } else {
-          shapes.push(...expandedShapes);
+          return g;
         }
+        
+        // Vrátit expandované shapes (může být pole!)
+        return expandedShapes.length === 1 ? expandedShapes[0] : expandedShapes;
       } else {
-        console.warn(`[svag v1.2.0] extractShapes: Symbol #${symbolId} nenalezen`);
+        console.warn(`[svag] Compiler: Symbol #${symbolId} nenalezen, přeskakuji <use>`);
+        return null;
       }
+    }
+    
+    // <use> bez href - přeskočit
+    return null;
+  }
+  
+  // Vytvořit nový element stejného typu
+  const compiled = document.createElementNS('http://www.w3.org/2000/svg', tagName);
+  
+  // Definice atributů podle typu elementu
+  const geometryAttrs = {
+    'path': ['d'],
+    'circle': ['cx', 'cy', 'r'],
+    'rect': ['x', 'y', 'width', 'height', 'rx', 'ry'],
+    'ellipse': ['cx', 'cy', 'rx', 'ry'],
+    'line': ['x1', 'y1', 'x2', 'y2'],
+    'polygon': ['points'],
+    'polyline': ['points'],
+    'g': [] // Group nemá geometry atributy
+  };
+  
+  // Style atributy (společné pro všechny)
+  const styleAttrs = [
+    'fill', 'stroke', 'stroke-width', 'stroke-linecap', 
+    'stroke-linejoin', 'stroke-dasharray', 'stroke-dashoffset',
+    'stroke-miterlimit', 'opacity', 'fill-opacity', 
+    'stroke-opacity', 'fill-rule', 'clip-rule',
+    'transform', 'style'
+  ];
+  
+  // 1. Zkopírovat geometry atributy
+  const geomAttrs = geometryAttrs[tagName] || [];
+  geomAttrs.forEach(attr => {
+    if (sourceShape.hasAttribute(attr)) {
+      compiled.setAttribute(attr, sourceShape.getAttribute(attr));
     }
   });
   
-  return shapes;
-}
-
-/**
- * Extrahuje čistý SVG z elementu
- * @param {Element} svgElement - SVG element z DOM
- * @returns {Object} { content: string, name: string }
- */
-function extractCleanSvg(svgElement) {
-  console.log('[svag v1.2.0] extractCleanSvg: Začínám extrakci...');
-  
-  // Vytvořit nový čistý SVG
-  const cleanSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  cleanSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-  cleanSvg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
-  
-  // ViewBox - zkusit získat z různých zdrojů
-  let viewBox = svgElement.getAttribute('viewBox');
-  
-  // Pokud není viewBox, zkusit ze symbolu pokud je <use>
-  if (!viewBox) {
-    const useElement = svgElement.querySelector('use');
-    if (useElement) {
-      const href = useElement.getAttribute('href') || useElement.getAttribute('xlink:href');
-      if (href && href.startsWith('#')) {
-        const symbolId = href.substring(1);
-        const symbol = document.getElementById(symbolId) || findElementInShadowDOM(symbolId);
-        if (symbol && symbol.hasAttribute('viewBox')) {
-          viewBox = symbol.getAttribute('viewBox');
-        }
+  // 2. Zkopírovat style atributy (pokud existují jako atributy)
+  styleAttrs.forEach(attr => {
+    if (sourceShape.hasAttribute(attr)) {
+      let value = sourceShape.getAttribute(attr);
+      // Oprava dvojitého ## v hodnotách
+      if (typeof value === 'string') {
+        value = value.replace(/#+/g, (match) => match.length > 1 ? '#' : match);
       }
+      compiled.setAttribute(attr, value);
+    }
+  });
+  
+  // 3. VŽDY aplikovat computed fill pokud není definovaný
+  // Zkontrolovat jestli má fill definovaný (jako atribut nebo ve style)
+  const hasFillDefined = compiled.hasAttribute('fill') || 
+                         (compiled.hasAttribute('style') && compiled.getAttribute('style').includes('fill:'));
+  
+  if (!hasFillDefined) {
+    try {
+      const computed = window.getComputedStyle(sourceShape);
+      const fill = computed.fill;
+      
+      // Aplikovat computed fill (i když je rgb(0, 0, 0) - černá může být validní barva!)
+      if (fill && fill !== 'none') {
+        // Oprava dvojitého ##
+        const cleanFill = fill.replace(/^#+/, '#');
+        compiled.setAttribute('fill', cleanFill);
+        console.debug(`[svag] Compiler: Aplikován computed fill: ${cleanFill}`);
+      } else {
+        // Fallback na currentColor pokud není nic definováno
+        compiled.setAttribute('fill', 'currentColor');
+        console.debug('[svag] Compiler: Aplikován fallback fill: currentColor');
+      }
+    } catch (error) {
+      // Computed style může selhat
+      console.debug('[svag] Compiler: Chyba při získávání computed style:', error);
+      // Fallback
+      compiled.setAttribute('fill', 'currentColor');
     }
   }
   
-  // Fallback viewBox
-  if (!viewBox) {
-    const width = svgElement.getAttribute('width') || '24';
-    const height = svgElement.getAttribute('height') || '24';
-    viewBox = `0 0 ${width} ${height}`;
+  // 4. VŽDY odstranit class atribut (nikdy ho nepotřebujeme - způsobuje problémy)
+  if (sourceShape.hasAttribute('class')) {
+    compiled.removeAttribute('class');
+    console.debug('[svag] Compiler: Odstraněn class atribut');
   }
   
-  cleanSvg.setAttribute('viewBox', viewBox);
+  // 5. Pokud je to <g> (group), zkompilovat children rekurzivně
+  if (tagName === 'g') {
+    const children = sourceShape.querySelectorAll(':scope > path, :scope > circle, :scope > rect, :scope > ellipse, :scope > line, :scope > polygon, :scope > polyline, :scope > g, :scope > use');
+    children.forEach(child => {
+      const compiledChild = compileShape(child);
+      if (compiledChild) {
+        // compiledChild může být pole (expandovaný <use>)
+        if (Array.isArray(compiledChild)) {
+          compiledChild.forEach(c => compiled.appendChild(c));
+        } else {
+          compiled.appendChild(compiledChild);
+        }
+      }
+    });
+  }
   
-  // Extrahovat shapes
-  const shapes = extractShapes(svgElement);
-  console.log(`[svag v1.2.0] extractCleanSvg: Extrahovano ${shapes.length} shapes`);
-  
-  shapes.forEach(shape => cleanSvg.appendChild(shape));
-  
-  // Extrahovat název ikony
-  const name = svgElement.getAttribute('data-dssvgid') || 
-               extractIconName(svgElement) || 
-               'icon';
-  
-  console.log(`[svag v1.2.0] extractCleanSvg: Název ikony: ${name}`);
-  
-  return {
-    content: cleanSvg.outerHTML,
-    name: name
-  };
+  return compiled;
 }
 
 // Helper funkce pro resolving <use> elementů s interními referencemi (vylepšená v1.1.2)
@@ -419,17 +412,19 @@ function resolveUseElement(useElement) {
     });
   }
   
-  // NOVÉ v1.2.0: Použití nového extraction layeru
-  console.log('[svag v1.2.0] resolveUseElement: Začínám extrakci shapes...');
+  // NOVÉ v1.1.7: SVG PATH COMPILER
+  // Místo kopírování innerHTML a pak aplikace computed styles,
+  // zkompilujeme čistý SVG přímo z elementů a jejich atributů
+  console.log('[svag] SVG Compiler: Začínám kompilaci...');
   
-  const extractedShapes = extractShapes(referencedElement);
+  const compiledShapes = compileSvgShapes(referencedElement);
   
-  // Přidat extrahované shapes do nového SVG
-  extractedShapes.forEach(shape => {
+  // Přidat zkompilované shapes do nového SVG
+  compiledShapes.forEach(shape => {
     newSvg.appendChild(shape);
   });
   
-  console.log(`[svag v1.2.0] resolveUseElement: Extrahovano ${extractedShapes.length} shapes`);
+  console.log(`[svag] SVG Compiler: Zkompilováno ${compiledShapes.length} elementů`);
   
   // Zkopírovat inline styly z <use> nebo parent <svg> (fill, stroke, atd.)
   const useStyles = window.getComputedStyle(useElement);
@@ -775,10 +770,7 @@ function createActionPopup() {
   if (galleryBtn) {
     galleryBtn.addEventListener('mouseenter', () => {
       if (currentHoveredSvg) {
-        // NOVÉ v1.2.0: Použití nového extraction layeru
-        console.log('[svag v1.2.0] galleryBtn: Extrakce čistého SVG...');
-        const cleanData = extractCleanSvg(currentHoveredSvg);
-        sendToGallery(cleanData, currentHoveredSvg);
+        sendToGallery(currentHoveredSvg);
         hideActionPopup();
       }
     });
@@ -787,10 +779,7 @@ function createActionPopup() {
   if (downloadBtn) {
     downloadBtn.addEventListener('mouseenter', () => {
       if (currentHoveredSvg) {
-        // NOVÉ v1.2.0: Použití nového extraction layeru
-        console.log('[svag v1.2.0] downloadBtn: Extrakce čistého SVG...');
-        const cleanData = extractCleanSvg(currentHoveredSvg);
-        downloadSvg(cleanData, currentHoveredSvg);
+        downloadSvg(currentHoveredSvg);
         hideActionPopup();
       }
     });
@@ -1484,12 +1473,72 @@ function downloadDirectly(url, filename, sizeKB = null) {
   showNotification(message, popupPosition);
 }
 
-// NOVÉ v1.2.0: Zjednodušené stažení SVG (vždy máme čistý content z extractCleanSvg)
-async function downloadSvg(cleanData, element) {
-  console.log('[svag v1.2.0] downloadSvg: Začínám stahování...');
+// Stažení SVG (vylepšená verze s podporou všech typů)
+async function downloadSvg(svgData) {
+  let content = svgData.content;
   
-  const content = cleanData.content;
-  const iconName = cleanData.name;
+  // Pokud ještě nemáme content (pro URL-based SVG), načteme ho
+  if (!content && svgData.url) {
+    try {
+      // Pro sprite s fragmentem (#icon-name)
+      if (svgData.url.includes('#')) {
+        const [url, fragment] = svgData.url.split('#');
+        const response = await fetch(url);
+        const svgText = await response.text();
+        
+        // Pokusit se extrahovat konkrétní symbol
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(svgText, 'image/svg+xml');
+        const symbol = doc.getElementById(fragment);
+        
+        if (symbol) {
+          // Převést symbol na SVG
+          const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          svg.innerHTML = symbol.innerHTML;
+          // Zkopírovat viewBox ze symbolu pokud existuje
+          if (symbol.getAttribute('viewBox')) {
+            svg.setAttribute('viewBox', symbol.getAttribute('viewBox'));
+          }
+          content = svg.outerHTML;
+        } else {
+          content = svgText;
+        }
+      } else {
+        const response = await fetch(svgData.url);
+        content = await response.text();
+      }
+    } catch (error) {
+      console.error('[svag] Chyba při načítání SVG:', error);
+      showNotification('load error', popupPosition);
+      return;
+    }
+  }
+  
+  // Pro OBJECT, EMBED a IFRAME - získat obsah z contentDocument
+  if (!content && (svgData.type === 'object' || svgData.type === 'embed' || svgData.type === 'iframe')) {
+    try {
+      const contentDoc = svgData.element.contentDocument;
+      if (contentDoc) {
+        const svgElement = contentDoc.querySelector('svg');
+        if (svgElement) {
+          content = svgElement.outerHTML;
+        }
+      }
+    } catch (error) {
+      // Cross-origin může blokovat přístup
+      console.log('[svag] Cannot access contentDocument, trying URL');
+      if (svgData.url) {
+        try {
+          const response = await fetch(svgData.url);
+          content = await response.text();
+        } catch (fetchError) {
+          console.error('[svag] Chyba při načítání SVG:', fetchError);
+          showNotification('load error', popupPosition);
+          return;
+        }
+      }
+    }
+  }
   
   if (!content) {
     showNotification('no content', popupPosition);
@@ -1501,9 +1550,19 @@ async function downloadSvg(cleanData, element) {
   const url = URL.createObjectURL(blob);
   const sizeKB = (blob.size / 1024).toFixed(1);
   
-  // Použít název z cleanData
-  const filename = `${iconName}.svg`;
-  console.log(`[svag v1.2.0] downloadSvg: Název souboru: ${filename} (${sizeKB}kb)`);
+  // INTELIGENTNÍ POJMENOVÁNÍ: Pokus o extrakci názvu ikony
+  const iconName = extractIconName(svgData.element);
+  const timestamp = new Date().getTime();
+  
+  // Pokud máme název ikony, použij ho, jinak fallback na timestamp
+  let filename;
+  if (iconName) {
+    filename = `${iconName}.svg`;
+    console.log(`📝 Icon name detected: ${iconName}`);
+  } else {
+    filename = `svg-icon-${timestamp}.svg`;
+    console.log('📝 No icon name detected, using timestamp');
+  }
   
   // Zkontrolovat, zda chrome.runtime existuje
   if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
@@ -1536,16 +1595,94 @@ async function downloadSvg(cleanData, element) {
   hideActionPopup();
 }
 
-// NOVÉ v1.2.0: Zjednodušené odeslání do galerie (vždy máme čistý content z extractCleanSvg)
-async function sendToGallery(cleanData, element) {
-  console.log('[svag v1.2.0] sendToGallery: Začínám odesílání...');
+// Odeslání do galerie (vylepšená verze s podporou všech typů)
+async function sendToGallery(svgData) {
+  let content = svgData.content;
   
-  const content = cleanData.content;
-  const iconName = cleanData.name;
+  // Pokud ještě nemáme content (pro URL-based SVG), načteme ho
+  if (!content && svgData.url) {
+    try {
+      // Pro sprite s fragmentem (#icon-name)
+      if (svgData.url.includes('#')) {
+        const [url, fragment] = svgData.url.split('#');
+        const response = await fetch(url);
+        const svgText = await response.text();
+        
+        // Pokusit se extrahovat konkrétní symbol
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(svgText, 'image/svg+xml');
+        const symbol = doc.getElementById(fragment);
+        
+        if (symbol) {
+          // Převést symbol na SVG
+          const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          svg.innerHTML = symbol.innerHTML;
+          // Zkopírovat viewBox ze symbolu pokud existuje
+          if (symbol.getAttribute('viewBox')) {
+            svg.setAttribute('viewBox', symbol.getAttribute('viewBox'));
+          }
+          content = svg.outerHTML;
+        } else {
+          content = svgText;
+        }
+      } else {
+        const response = await fetch(svgData.url);
+        content = await response.text();
+      }
+    } catch (error) {
+      console.error('[svag] Chyba při načítání SVG:', error);
+      showNotification('load error', popupPosition);
+      return;
+    }
+  }
+  
+  // Pro OBJECT, EMBED a IFRAME - získat obsah z contentDocument
+  if (!content && (svgData.type === 'object' || svgData.type === 'embed' || svgData.type === 'iframe')) {
+    try {
+      const contentDoc = svgData.element.contentDocument;
+      if (contentDoc) {
+        const svgElement = contentDoc.querySelector('svg');
+        if (svgElement) {
+          content = svgElement.outerHTML;
+        }
+      }
+    } catch (error) {
+      // Cross-origin může blokovat přístup
+      console.log('[svag] Cannot access contentDocument, trying URL');
+      if (svgData.url) {
+        try {
+          const response = await fetch(svgData.url);
+          content = await response.text();
+        } catch (fetchError) {
+          console.error('[svag] Chyba při načítání SVG:', fetchError);
+          showNotification('load error', popupPosition);
+          return;
+        }
+      }
+    }
+  }
   
   if (!content) {
     showNotification('no content', popupPosition);
     return;
+  }
+  
+  // Extrahovat název ikony
+  let iconName = 'Bez názvu';
+  if (svgData.url) {
+    try {
+      const url = new URL(svgData.url, window.location.href);
+      const pathname = url.pathname;
+      const filename = pathname.split('/').pop();
+      iconName = filename.replace(/\.(svg|png|jpg|jpeg)$/i, '') || 'Bez názvu';
+    } catch {
+      // Zkusit extrahovat z URL bez parsování
+      const parts = svgData.url.split('/');
+      const filename = parts[parts.length - 1];
+      if (filename) {
+        iconName = filename.replace(/\.(svg|png|jpg|jpeg)$/i, '') || 'Bez názvu';
+      }
+    }
   }
   
   // Vypočítat velikost SVG v KB
@@ -1783,15 +1920,14 @@ svgMutationObserver.observe(document.body, {
   subtree: true
 });
 
-console.log('svag extension loaded - extraction layer rewrite v1.2.0');
+console.log('svag extension loaded - enhanced SVG detection v1.1.9');
 console.log('Supported SVG types: inline, img, data-uri, object, embed, background, sprite, mask, clip-path, pseudo-elements, picture, iframe, css-cursor, css-list-style, css-border-image, css-filter, css-shape-outside, foreign-object, shadow-dom, use-resolved');
 console.log('MutationObserver: active - tracking dynamic SVG additions');
-console.log('🚀 EXTRACTION LAYER REWRITE v1.2.0:');
-console.log('  ✅ Nový jednoduchý extraction systém (extractCleanSvg + extractShapes)');
-console.log('  ✅ VŽDY extrahuje čisté SVG bez class atributů');
-console.log('  ✅ VŽDY aplikuje computed fill/stroke z CSS');
-console.log('  ✅ Automaticky expanduje <use> elementy inline');
+console.log('🚀 SVG PATH COMPILER v1.1.9 - FINÁLNÍ OPRAVA:');
+console.log('  ✅ VŽDY aplikuje computed fill z CSS (i pro elementy s class)');
+console.log('  ✅ VŽDY odstraňuje class atributy ze všech elementů');
 console.log('  ✅ Fallback na currentColor pokud fill není definován');
-console.log('  🎯 Výsledek: Jednodušší kód, robustnější extrakce, 100% čistý SVG!');
+console.log('  ✅ Akceptuje i černou (rgb(0,0,0)) jako validní fill');
+console.log('  🎯 Výsledek: ČISTÝ SVG bez class, s validním fill!');
 
 

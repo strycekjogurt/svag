@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "svag",
-  "version": "1.1.9",
-  "description": "Stahování a správa SVG ikon z webových stránek - kompletní detekce všech SVG typů včetně Shadow DOM a CSS",
+  "version": "1.2.0",
+  "description": "Stahování a správa SVG ikon z webových stránek - nový extraction layer pro čistý SVG bez CSS tříd",
   "permissions": [
     "activeTab",
     "downloads",

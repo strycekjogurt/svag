@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVG Test Cases - svag Extension</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 40px;
+        }
+        .test-case {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-case h3 {
+            margin-top: 0;
+            color: #666;
+            font-size: 14px;
+            font-weight: normal;
+        }
+        .test-case-content {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        button, select, .menu-item {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        button:hover, .menu-item:hover {
+            background: #f0f0f0;
+        }
+        svg {
+            display: inline-block;
+        }
+        .icon-red { fill: red; }
+        .icon-blue { fill: blue; }
+        .c4 { fill: #ff6b35; }
+        .b20 { stroke: #2c3e50; }
+    </style>
+    
+    <!-- Sprite definitions -->
+    <svg style="display: none;">
+        <defs>
+            <symbol id="bookmark-icon" viewBox="0 0 18 18">
+                <path d="M4.5 2.25C4.5 1.83579 4.83579 1.5 5.25 1.5H12.75C13.1642 1.5 13.5 1.83579 13.5 2.25V15.75L9 12.75L4.5 15.75V2.25Z"/>
+            </symbol>
+            
+            <symbol id="calendar-icon" viewBox="0 0 18 18">
+                <path d="M4.5 2.25V0.75M13.5 2.25V0.75M2.25 5.25H15.75M3.75 2.25H14.25C15.0784 2.25 15.75 2.92157 15.75 3.75V14.25C15.75 15.0784 15.0784 15.75 14.25 15.75H3.75C2.92157 15.75 2.25 15.0784 2.25 14.25V3.75C2.25 2.92157 2.92157 2.25 3.75 2.25Z" stroke-width="1.5" stroke-linecap="round"/>
+            </symbol>
+            
+            <symbol id="download-icon" viewBox="0 0 18 18">
+                <path d="M9 2.25V11.25M9 11.25L12.75 7.5M9 11.25L5.25 7.5M3.75 15.75H14.25" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </symbol>
+            
+            <symbol id="search-icon" viewBox="0 0 18 18">
+                <circle cx="8" cy="8" r="5.25" stroke-width="1.5"/>
+                <path d="M12 12L15.75 15.75" stroke-width="1.5" stroke-linecap="round"/>
+            </symbol>
+        </defs>
+    </svg>
+</head>
+<body>
+    <h1>SVG Test Cases - svag Extension Testing</h1>
+    <p>Najeďte myší na ikony a zkuste CMD+click pro stažení. Extension by měl správně extrahovat všechny typy SVG zápisů.</p>
+    
+    <!-- Test 1: Inline SVG v buttonu -->
+    <div class="test-case">
+        <h3>Test 1: Inline SVG v buttonu - přímý path</h3>
+        <div class="test-case-content">
+            <button>
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <path d="M9 2.25L11.2451 7.47295L16.8541 8.2918L12.9271 12.1146L13.8607 17.7082L9 15.2275L4.13934 17.7082L5.07285 12.1146L1.14591 8.2918L6.75486 7.47295L9 2.25Z" fill="#FFD700"/>
+                </svg>
+                Star Button
+            </button>
+        </div>
+    </div>
+    
+    <!-- Test 2: SVG s <use> v buttonu -->
+    <div class="test-case">
+        <h3>Test 2: SVG s &lt;use&gt; elementem v buttonu - sprite reference</h3>
+        <div class="test-case-content">
+            <button>
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor">
+                    <use href="#bookmark-icon"></use>
+                </svg>
+                Bookmark
+            </button>
+        </div>
+    </div>
+    
+    <!-- Test 3: SVG s CSS třídou pro fill -->
+    <div class="test-case">
+        <h3>Test 3: SVG s fill z CSS třídy</h3>
+        <div class="test-case-content">
+            <div class="menu-item">
+                <svg class="icon-red" width="18" height="18" viewBox="0 0 18 18">
+                    <path d="M9 1.5C4.85786 1.5 1.5 4.85786 1.5 9C1.5 13.1421 4.85786 16.5 9 16.5C13.1421 16.5 16.5 13.1421 16.5 9C16.5 4.85786 13.1421 1.5 9 1.5Z"/>
+                </svg>
+                Menu Item
+            </div>
+        </div>
+    </div>
+    
+    <!-- Test 4: Path s CSS třídami c4 b20 -->
+    <div class="test-case">
+        <h3>Test 4: Path s CSS třídami (c4 b20) - fill a stroke z CSS</h3>
+        <div class="test-case-content">
+            <svg width="18" height="18" viewBox="0 0 18 18">
+                <path class="c4 b20" d="M2.25 9H15.75M9 2.25V15.75" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+        </div>
+    </div>
+    
+    <!-- Test 5: SVG s CSS proměnnou -->
+    <div class="test-case">
+        <h3>Test 5: SVG s CSS proměnnou (var(--color))</h3>
+        <div class="test-case-content">
+            <button style="--color: #4CAF50;">
+                <svg width="18" height="18" viewBox="0 0 18 18" style="fill: var(--color);">
+                    <path d="M3.75 9L7.5 12.75L14.25 5.25" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Check
+            </button>
+        </div>
+    </div>
+    
+    <!-- Test 6: SVG v selectu -->
+    <div class="test-case">
+        <h3>Test 6: SVG uvnitř select elementu</h3>
+        <div class="test-case-content">
+            <select>
+                <option>
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="#9333EA">
+                        <rect x="3" y="3" width="12" height="12" rx="2"/>
+                    </svg>
+                    Option 1
+                </option>
+            </select>
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="#9333EA" style="margin-left: 10px;">
+                <rect x="3" y="3" width="12" height="12" rx="2"/>
+            </svg>
+        </div>
+    </div>
+    
+    <!-- Test 7: Vnořené groupy -->
+    <div class="test-case">
+        <h3>Test 7: Vnořené SVG groupy (&lt;g&gt;)</h3>
+        <div class="test-case-content">
+            <button>
+                <svg width="18" height="18" viewBox="0 0 18 18">
+                    <g fill="#E91E63">
+                        <g transform="translate(2, 2)">
+                            <circle cx="7" cy="7" r="5"/>
+                            <circle cx="7" cy="7" r="2" fill="white"/>
+                        </g>
+                    </g>
+                </svg>
+                Grouped
+            </button>
+        </div>
+    </div>
+    
+    <!-- Test 8: Multiple paths s různými fills -->
+    <div class="test-case">
+        <h3>Test 8: Multiple paths s různými fill hodnotami</h3>
+        <div class="test-case-content">
+            <svg width="24" height="24" viewBox="0 0 24 24">
+                <path d="M12 2L15 9L22 10L17 15L18 22L12 18.5L6 22L7 15L2 10L9 9L12 2Z" fill="#FFD700"/>
+                <circle cx="12" cy="12" r="3" fill="#FF5722"/>
+            </svg>
+        </div>
+    </div>
+    
+    <!-- Test 9: SVG s xlink:href (starší syntax) -->
+    <div class="test-case">
+        <h3>Test 9: SVG s xlink:href (starší syntax sprite)</h3>
+        <div class="test-case-content">
+            <button>
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="#2196F3">
+                    <use xlink:href="#calendar-icon"></use>
+                </svg>
+                Calendar (xlink)
+            </button>
+        </div>
+    </div>
+    
+    <!-- Test 10: SVG s stroke, ne fill -->
+    <div class="test-case">
+        <h3>Test 10: SVG pouze se stroke (bez fill)</h3>
+        <div class="test-case-content">
+            <button>
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#00BCD4" stroke-width="1.5">
+                    <use href="#download-icon"></use>
+                </svg>
+                Download
+            </button>
+        </div>
+    </div>
+    
+    <!-- Test 11: Kombinace circle + rect -->
+    <div class="test-case">
+        <h3>Test 11: Kombinace různých shape elementů (circle, rect)</h3>
+        <div class="test-case-content">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="#795548">
+                <rect x="4" y="4" width="7" height="7" rx="1"/>
+                <rect x="13" y="4" width="7" height="7" rx="1"/>
+                <rect x="4" y="13" width="7" height="7" rx="1"/>
+                <circle cx="16.5" cy="16.5" r="3.5"/>
+            </svg>
+        </div>
+    </div>
+    
+    <!-- Test 12: SVG s ellipse a line -->
+    <div class="test-case">
+        <h3>Test 12: Ellipse a line elementy</h3>
+        <div class="test-case-content">
+            <svg width="24" height="24" viewBox="0 0 24 24">
+                <ellipse cx="12" cy="12" rx="8" ry="5" fill="#9C27B0"/>
+                <line x1="4" y1="12" x2="20" y2="12" stroke="#FFC107" stroke-width="2"/>
+            </svg>
+        </div>
+    </div>
+    
+    <!-- Test 13: Polygon a polyline -->
+    <div class="test-case">
+        <h3>Test 13: Polygon a polyline elementy</h3>
+        <div class="test-case-content">
+            <svg width="24" height="24" viewBox="0 0 24 24">
+                <polygon points="12,2 22,22 2,22" fill="#FF9800"/>
+                <polyline points="4,18 12,8 20,18" fill="none" stroke="#F44336" stroke-width="2"/>
+            </svg>
+        </div>
+    </div>
+    
+    <!-- Test 14: Data atribut data-dssvgid -->
+    <div class="test-case">
+        <h3>Test 14: SVG s data-dssvgid atributem (prioritní název)</h3>
+        <div class="test-case-content">
+            <button>
+                <svg class="icon" data-dssvgid="custom-search-icon" fill="#3F51B5" height="18" viewBox="0 0 18 18" width="18">
+                    <use href="#search-icon"></use>
+                </svg>
+                Search
+            </button>
+        </div>
+    </div>
+    
+    <!-- Test 15: Complexní nested structure -->
+    <div class="test-case">
+        <h3>Test 15: Komplexní nested struktura s více groupami</h3>
+        <div class="test-case-content">
+            <button>
+                <svg width="24" height="24" viewBox="0 0 24 24">
+                    <g fill="#607D8B">
+                        <g transform="translate(4, 4)">
+                            <path d="M8 0L10 6L16 7L12 11L13 17L8 14L3 17L4 11L0 7L6 6L8 0Z"/>
+                        </g>
+                    </g>
+                </svg>
+                Nested
+            </button>
+        </div>
+    </div>
+    
+    <!-- Test 16: SVG bez explicitního fill (inherit/currentColor) -->
+    <div class="test-case">
+        <h3>Test 16: SVG bez explicitního fill (měl by použít computed/currentColor)</h3>
+        <div class="test-case-content">
+            <button style="color: #E91E63;">
+                <svg width="18" height="18" viewBox="0 0 18 18">
+                    <path d="M9 1.5C4.85786 1.5 1.5 4.85786 1.5 9C1.5 13.1421 4.85786 16.5 9 16.5C13.1421 16.5 16.5 13.1421 16.5 9C16.5 4.85786 13.1421 1.5 9 1.5ZM7.5 12.75L4.5 9.75L5.56066 8.68934L7.5 10.6287L12.4393 5.68934L13.5 6.75L7.5 12.75Z"/>
+                </svg>
+                Inherit Color
+            </button>
+        </div>
+    </div>
+    
+    <!-- Test 17: SVG v menu s pointer-events -->
+    <div class="test-case">
+        <h3>Test 17: SVG s pointer-events: none</h3>
+        <div class="test-case-content">
+            <button>
+                <svg width="18" height="18" viewBox="0 0 18 18" style="pointer-events: none;" fill="#009688">
+                    <path d="M9 2.25C5.27208 2.25 2.25 5.27208 2.25 9C2.25 12.7279 5.27208 15.75 9 15.75C12.7279 15.75 15.75 12.7279 15.75 9C15.75 5.27208 12.7279 2.25 9 2.25ZM12.5303 7.28033L8.53033 11.2803C8.23744 11.5732 7.76256 11.5732 7.46967 11.2803L5.46967 9.28033C5.17678 8.98744 5.17678 8.51256 5.46967 8.21967C5.76256 7.92678 6.23744 7.92678 6.53033 8.21967L8 9.68934L11.4697 6.21967C11.7626 5.92678 12.2374 5.92678 12.5303 6.21967C12.8232 6.51256 12.8232 6.98744 12.5303 7.28033Z"/>
+                </svg>
+                Pointer Events None
+            </button>
+        </div>
+    </div>
+    
+    <!-- Test 18: Reálný příklad z aplikace -->
+    <div class="test-case">
+        <h3>Test 18: Reálný příklad z aplikace (simulace calendar button)</h3>
+        <div class="test-case-content">
+            <div class="una-field-widget" style="display: inline-block;">
+                <div data-automationid="daterange-field" class="daterange-field">
+                    <button class="button-module" data-size="medium" tabindex="0" type="button">
+                        <div class="button-text">
+                            <svg class="icon-module calendar-icon" data-dssvgid="calendar" fill="rgb(51, 51, 51)" height="18" role="none" viewBox="0 0 18 18" width="18">
+                                <use xlink:href="#calendar-icon"></use>
+                            </svg>
+                            19.10.2025 – 17.11.2025
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Test 19: Mix všeho -->
+    <div class="test-case">
+        <h3>Test 19: Mix - sprite use + CSS class + transform</h3>
+        <div class="test-case-content">
+            <button>
+                <svg class="icon-blue" width="20" height="20" viewBox="0 0 18 18" transform="rotate(45)">
+                    <use href="#download-icon"></use>
+                </svg>
+                Complex Mix
+            </button>
+        </div>
+    </div>
+    
+    <!-- Test 20: Prázdný path (edge case) -->
+    <div class="test-case">
+        <h3>Test 20: Edge case - path s currentColor</h3>
+        <div class="test-case-content">
+            <button style="color: #673AB7;">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor">
+                    <path d="M15.75 8.25H9.75V2.25H8.25V8.25H2.25V9.75H8.25V15.75H9.75V9.75H15.75V8.25Z"/>
+                </svg>
+                Plus currentColor
+            </button>
+        </div>
+    </div>
+    
+    <div style="margin-top: 40px; padding: 20px; background: #fff3cd; border-radius: 8px;">
+        <h3 style="margin-top: 0;">Instrukce pro testování:</h3>
+        <ol>
+            <li>Ujistěte se, že je extension načten (reload extension v chrome://extensions/)</li>
+            <li>Najeďte myší na každou ikonu - měl by se objevit popup s buttony</li>
+            <li>Stiskněte CMD+click (nebo klikněte na download button) pro stažení SVG</li>
+            <li>Otevřete stažený SVG v editoru nebo browseru</li>
+            <li>Ověřte:
+                <ul>
+                    <li>✅ Žádné <code>class</code> atributy</li>
+                    <li>✅ Všechny elementy mají <code>fill</code> nebo <code>stroke</code></li>
+                    <li>✅ Správný <code>xmlns</code> a <code>viewBox</code></li>
+                    <li>✅ Validní XML bez errorů</li>
+                    <li>✅ Ikona se zobrazí správně</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+</body>
+</html>
+
