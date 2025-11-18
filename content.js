@@ -257,7 +257,75 @@ function resolveUseElement(useElement) {
     newSvg.innerHTML = referencedElement.innerHTML || referencedElement.outerHTML;
   }
   
-  // NOVÉ: Vložit zkopírované <style> elementy na začátek SVG
+  // NOVÉ v1.1.6: Aplikovat computed styles místo CSS tříd
+  // (oprava pro CSS třídy definované v externích stylesheets)
+  try {
+    const sourceElements = Array.from(referencedElement.querySelectorAll('*'));
+    const targetElements = Array.from(newSvg.querySelectorAll('*'));
+    
+    let appliedStyles = 0;
+    
+    for (let i = 0; i < Math.min(sourceElements.length, targetElements.length); i++) {
+      const source = sourceElements[i];
+      const target = targetElements[i];
+      
+      // Získat computed style z původního elementu
+      const computed = window.getComputedStyle(source);
+      
+      // Důležité SVG properties které chceme zachovat
+      const svgProperties = [
+        'fill',
+        'stroke', 
+        'strokeWidth',
+        'strokeDasharray',
+        'strokeDashoffset',
+        'strokeLinecap',
+        'strokeLinejoin',
+        'strokeMiterlimit',
+        'opacity',
+        'fillOpacity',
+        'strokeOpacity',
+        'fillRule',
+        'clipRule',
+        'display',
+        'visibility'
+      ];
+      
+      // Aplikovat computed styles jako inline
+      svgProperties.forEach(prop => {
+        const cssProperty = prop.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`);
+        const value = computed[prop];
+        
+        // Aplikovat pouze pokud má smysluplnou hodnotu
+        if (value && 
+            value !== 'none' && 
+            value !== 'auto' && 
+            value !== 'normal' &&
+            value !== 'rgb(0, 0, 0)' && // Černá je default
+            value !== '0px' &&
+            value !== '0') {
+          
+          // Oprava dvojitého ## pokud existuje
+          const cleanValue = typeof value === 'string' ? value.replace(/^#+/, '#') : value;
+          target.style[prop] = cleanValue;
+          appliedStyles++;
+        }
+      });
+      
+      // Odstranit class atribut (už není potřeba)
+      if (target.hasAttribute('class')) {
+        target.removeAttribute('class');
+      }
+    }
+    
+    if (appliedStyles > 0) {
+      console.log(`[svag] Aplikováno ${appliedStyles} computed styles, odstraněny CSS třídy`);
+    }
+  } catch (error) {
+    console.warn('[svag] Chyba při aplikaci computed styles:', error);
+  }
+  
+  // NOVÉ: Vložit zkopírované <style> elementy na začátek SVG (fallback)
   if (stylesToCopy.length > 0) {
     const defsElement = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
     stylesToCopy.forEach(style => defsElement.appendChild(style));
@@ -1759,12 +1827,12 @@ svgMutationObserver.observe(document.body, {
   subtree: true
 });
 
-console.log('svag extension loaded - enhanced SVG detection v1.1.5');
+console.log('svag extension loaded - enhanced SVG detection v1.1.6');
 console.log('Supported SVG types: inline, img, data-uri, object, embed, background, sprite, mask, clip-path, pseudo-elements, picture, iframe, css-cursor, css-list-style, css-border-image, css-filter, css-shape-outside, foreign-object, shadow-dom, use-resolved');
 console.log('MutationObserver: active - tracking dynamic SVG additions');
-console.log('🔧 KRITICKÉ OPRAVY v1.1.5:');
-console.log('  ✅ Přidány XML namespace definice (xmlns, xmlns:xlink) - oprava xlink:href error');
-console.log('  ✅ Kopírování <style> elementů z dokumentu - oprava chybějících CSS tříd');
-console.log('  ✅ Oprava dvojitého ## v fill/stroke atributech');
-console.log('  ✅ Kompletní funkční SVG se všemi styly a namespaces');
+console.log('🔧 KRITICKÁ OPRAVA v1.1.6:');
+console.log('  ✅ Aplikace computed styles místo CSS tříd z externích stylesheets');
+console.log('  ✅ Odstranění class atributů (už nejsou potřeba)');
+console.log('  ✅ Inline styles: fill, stroke, opacity, strokeWidth, atd.');
+console.log('  ✅ SVG nyní plně samostatné bez závislostí na externím CSS!');
 

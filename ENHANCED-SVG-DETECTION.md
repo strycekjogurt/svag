@@ -1,8 +1,59 @@
-# Kompletní detekce SVG v1.1.5
+# Kompletní detekce SVG v1.1.6
 
 ## Přehled změn
 
-### 🔧 v1.1.5 - KRITICKÁ OPRAVA (Aktuální verze)
+### 🔧 v1.1.6 - KRITICKÁ OPRAVA (Aktuální verze)
+
+**Problém #4:** CSS třídy stále nebyly vyřešeny správně.
+- ❌ Stažené SVG obsahovalo `class="c4 b20"` ale bez stylů
+- ❌ CSS definice byly v **externích stylesheets**, ne v inline `<style>`
+- ❌ Kopírování `<style>` elementů nefungovalo (nebyly v DOM)
+
+**Řešení: Aplikovat computed styles jako inline**
+
+Místo kopírování `<style>` elementů (které neexistují), extension nyní:
+
+1. **Získá computed styles** z původních elementů (z referencedElement)
+2. **Aplikuje je jako inline styles** na nové elementy (v newSvg)
+3. **Odstraní class atributy** (už nejsou potřeba)
+
+```javascript
+// Pro každý element
+const computed = window.getComputedStyle(sourceElement);
+
+// Aplikovat důležité SVG properties
+['fill', 'stroke', 'opacity', 'strokeWidth', ...].forEach(prop => {
+  if (value && value !== 'none') {
+    targetElement.style[prop] = value;
+  }
+});
+
+// Odstranit class
+targetElement.removeAttribute('class');
+```
+
+**SVG Properties které se aplikují:**
+- `fill`, `stroke`
+- `strokeWidth`, `strokeDasharray`, `strokeDashoffset`
+- `strokeLinecap`, `strokeLinejoin`, `strokeMiterlimit`
+- `opacity`, `fillOpacity`, `strokeOpacity`
+- `fillRule`, `clipRule`
+- `display`, `visibility`
+
+**Debug log:**
+```
+[svag] Aplikováno N computed styles, odstraněny CSS třídy
+```
+
+**Výsledek:**
+- ✅ Žádné CSS třídy v SVG
+- ✅ Všechny styly jako inline atributy
+- ✅ SVG plně samostatné, bez závislostí na externím CSS
+- ✅ Funguje správně i po otevření!
+
+---
+
+### 🔧 v1.1.5 - XML namespaces a CSS styly
 
 **Problém #3:** Stažené SVG obsahovalo chyby:
 - ❌ `Namespace prefix xlink for href on use is not defined` error
