@@ -61,6 +61,12 @@ app.get('/favicon-16x16.png', (req, res) => {
   res.sendFile(join(__dirname, 'icons', 'icon16.png'));
 });
 
+// Robots.txt route
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain');
+  res.sendFile(join(__dirname, 'robots.txt'));
+});
+
 // Inicializace Supabase
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

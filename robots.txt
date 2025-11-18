@@ -1,0 +1,26 @@
+# robots.txt for svag.pro
+# https://www.svag.pro/robots.txt
+
+User-agent: *
+Allow: /
+Allow: /gallery
+Allow: /privacy
+
+# Blokovat API endpointy
+Disallow: /api/
+
+# Blokovat webhook endpointy
+Disallow: /webhooks/
+
+# Blokovat admin/internal cesty
+Disallow: /admin/
+
+# Allow static resources
+Allow: /pages/
+Allow: /icons/
+Allow: /iframe/
+Allow: /Gallery/
+
+# Sitemap (pokud bude v budoucnu vytvořena)
+# Sitemap: https://www.svag.pro/sitemap.xml
+
