@@ -801,6 +801,23 @@ function recolorToBlack(svg) {
 }
 
 async function loadRecentIcons(token) {
+  // TEMPORARY: Skrýt preview dokud API nefunguje
+  console.log('⚠️  Icon preview temporarily disabled due to API issues');
+  console.log('💡 Click "Open Gallery" button to view your icons');
+  
+  iconsList.innerHTML = '';
+  const messageDiv = document.createElement('div');
+  messageDiv.style.cssText = 'text-align: center; padding: 20px; color: #666; font-size: 13px;';
+  messageDiv.innerHTML = `
+    <div style="font-size: 24px; margin-bottom: 8px;">👇</div>
+    <div>Click "Open Gallery" below</div>
+    <div style="font-size: 11px; margin-top: 4px;">to view your icons</div>
+  `;
+  iconsList.appendChild(messageDiv);
+  return;
+  
+  // DISABLED: API call (returns 401)
+  /* 
   try {
     console.log('🔄 Loading recent icons...');
     console.log('🔑 Token length:', token?.length);
