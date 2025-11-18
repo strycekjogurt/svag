@@ -473,6 +473,8 @@ async function verifyCode() {
     const data = await response.json();
     
     if (response.ok && data.token) {
+      console.log('✅ Login successful - synchronizing sessions');
+      
       // Success! Save token, refreshToken, email and API URL
       await chrome.storage.sync.set({ 
         apiToken: data.token,
@@ -483,6 +485,44 @@ async function verifyCode() {
       
       // Vymazat temporary stav autentizace
       await chrome.storage.sync.remove(['pendingEmail']);
+      
+      // Synchronizovat token do všech otevřených gallery tabů
+      try {
+        const tabs = await chrome.tabs.query({});
+        
+        for (const tab of tabs) {
+          if (tab.url && (tab.url.includes('/gallery') || tab.url.includes(apiUrl))) {
+            try {
+              await chrome.scripting.executeScript({
+                target: { tabId: tab.id },
+                func: (token, refreshToken, email) => {
+                  // Uložit tokeny do localStorage
+                  localStorage.setItem('token', token);
+                  if (refreshToken) {
+                    localStorage.setItem('refreshToken', refreshToken);
+                  }
+                  localStorage.setItem('userEmail', email);
+                  console.log('🔄 Extension login - localStorage synchronized');
+                  
+                  // Pokud jsme na login stránce, přesměrovat na gallery
+                  if (window.location.pathname.includes('/gallery/login')) {
+                    window.location.href = '/gallery';
+                  } else if (window.location.pathname.includes('/gallery')) {
+                    // Refresh gallery aby se načetly nové ikony
+                    window.location.reload();
+                  }
+                },
+                args: [data.token, data.refreshToken, currentEmail]
+              });
+              console.log('✅ Synchronized session for tab:', tab.url);
+            } catch (err) {
+              console.log('⚠️  Could not sync session for tab:', tab.url, err.message);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error synchronizing gallery sessions:', error);
+      }
       
       showLoggedIn(currentEmail, data.token);
     } else {
@@ -589,21 +629,46 @@ function attachGalleryListeners() {
   
   // Logout button
   logoutBtn.addEventListener('click', async () => {
+    console.log('🔓 Logout clicked - clearing all sessions');
+    
+    // Vymazat extension storage
     await chrome.storage.sync.remove(['apiToken', 'refreshToken', 'userEmail']);
     
-    // ===== NOVÉ: Notifikovat všechny galerie taby o odhlášení =====
-    chrome.tabs.query({}, (tabs) => {
-      tabs.forEach((tab) => {
-        if (tab.url && tab.url.includes('/gallery')) {
-          chrome.tabs.sendMessage(tab.id, {
-            action: 'extensionLogout'
-          }).catch(() => {
-            // Ignorovat chyby pro taby bez content scriptu
-          });
+    // Vymazat localStorage na všech gallery tabech
+    try {
+      const tabs = await chrome.tabs.query({});
+      
+      for (const tab of tabs) {
+        if (tab.url && (tab.url.includes('/gallery') || tab.url.includes(apiUrl))) {
+          try {
+            await chrome.scripting.executeScript({
+              target: { tabId: tab.id },
+              func: () => {
+                // Vymazat všechny auth tokeny z localStorage
+                localStorage.removeItem('token');
+                localStorage.removeItem('refreshToken');
+                localStorage.removeItem('userEmail');
+                console.log('🧹 Extension logout - localStorage cleared');
+                
+                // Pokud jsme na gallery stránce, přesměrovat na login
+                if (window.location.pathname.includes('/gallery') && 
+                    !window.location.pathname.includes('/login')) {
+                  window.location.href = '/gallery/login';
+                }
+              }
+            });
+            console.log('✅ Cleared session for tab:', tab.url);
+          } catch (err) {
+            // Tab možná nemá permissions nebo není dostupný
+            console.log('⚠️  Could not clear session for tab:', tab.url, err.message);
+          }
         }
-      });
-    });
+      }
+    } catch (error) {
+      console.error('❌ Error clearing gallery sessions:', error);
+    }
     
+    console.log('✅ Logout complete');
     showLoginForm();
   });
 }
