@@ -2,13 +2,11 @@
   "manifest_version": 3,
   "name": "svag",
   "version": "1.2.0",
-  "description": "Stahování a správa SVG ikon z webových stránek - nový extraction layer pro čistý SVG bez CSS tříd",
+  "description": "Stahování a správa SVG ikon z webových stránek - advanced extraction layer",
   "permissions": [
     "activeTab",
     "downloads",
-    "storage",
-    "scripting",
-    "tabs"
+    "storage"
   ],
   "host_permissions": [
     "<all_urls>"
