@@ -15,6 +15,7 @@ async function getValidToken() {
   const result = await chrome.storage.sync.get(['apiToken', 'refreshToken', 'apiUrl']);
   
   if (!result.apiToken || !result.refreshToken) {
+    console.log('[svag v1.2.0] getValidToken: Chybí tokeny');
     return null;
   }
   
@@ -23,6 +24,9 @@ async function getValidToken() {
     const payload = JSON.parse(atob(result.apiToken.split('.')[1]));
     const expiresAt = payload.exp * 1000; // Convert to milliseconds
     const now = Date.now();
+    const timeUntilExpire = (expiresAt - now) / 1000 / 60; // minuty
+    
+    console.log(`[svag v1.2.0] Token expires in ${timeUntilExpire.toFixed(1)} minutes`);
     
     // Pokud token vyprší za méně než 5 minut, refreshnout
     if (expiresAt - now < 5 * 60 * 1000) {
@@ -39,7 +43,7 @@ async function getValidToken() {
         }, async (response) => {
           if (chrome.runtime.lastError) {
             console.error('❌ Runtime error refreshing token:', chrome.runtime.lastError);
-            resolve(null);
+            resolve(null); // Vrátit null, ne původní token
           } else if (response && response.success) {
             // Uložit nový token
             await chrome.storage.sync.set({
@@ -50,7 +54,10 @@ async function getValidToken() {
             resolve(response.token);
           } else {
             console.error('❌ Failed to refresh token:', response);
-            resolve(null);
+            // Pokud refresh selhal, token je pravděpodobně neplatný
+            // Vymazat tokeny, aby se uživatel musel znovu přihlásit
+            // await chrome.storage.sync.remove(['apiToken', 'refreshToken']);
+            resolve(null); // Vrátit null, ne původní token
           }
         });
       });
@@ -59,7 +66,8 @@ async function getValidToken() {
     return result.apiToken;
   } catch (error) {
     console.error('Error checking token:', error);
-    return result.apiToken;
+    // Pokud token nelze přečíst, je neplatný
+    return null;
   }
 }
 
