@@ -31,6 +31,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/pages/landing.css">
+  <!-- GSAP Library -->
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
 </head>
 <body>
   <div class="container">
@@ -91,6 +93,223 @@
           <span class="step secondary">Switch to dev mode</span>
           <span class="step secondary">Load unpacked</span>
         </div>
+      </div>
+    </section>
+
+    <section class="changelog-section">
+      <h2 class="changelog-title">Change log</h2>
+      
+      <div class="changelog-content">
+        <div class="changelog-description">
+          <p class="changelog-text">svag is able to download 99% of svg files from web. It can work with almost every svg entry style in the code.</p>
+          <div class="changelog-info">
+            <a href="https://github.com/strycekjogurt/svag/releases/latest/download/svag.zip" download class="changelog-link">Download svag</a>
+            <span class="changelog-meta">v1.1</span>
+            <span class="changelog-meta">18 Nov 2025</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="changelog-grid">
+        <!-- Item 1 -->
+        <div class="changelog-item">
+          <div class="changelog-item-title">Inline SVG in button - direct path</div>
+          <div class="changelog-item-code"><span class="syntax-tag">&lt;button&gt;</span>
+  <span class="syntax-tag">&lt;svg</span> <span class="syntax-attr">width</span>=<span class="syntax-val">"18"</span> <span class="syntax-attr">height</span>=<span class="syntax-val">"18"</span> <span class="syntax-attr">viewBox</span>=<span class="syntax-val">"0 0 18 18"</span> <span class="syntax-attr">fill</span>=<span class="syntax-val">0000FF</span><span class="syntax-tag">&gt;</span>
+    <span class="syntax-tag">&lt;path</span> <span class="syntax-attr">d</span>=<span class="syntax-val">"M9 2.25...2.25Z"</span> <span class="syntax-attr">fill</span>=<span class="syntax-val">"#FFD700"</span><span class="syntax-tag">/&gt;</span>
+  <span class="syntax-tag">&lt;/svg&gt;</span>
+  Star Button
+<span class="syntax-tag">&lt;/button&gt;</span></div>
+        </div>
+
+        <!-- Item 2 -->
+        <div class="changelog-item">
+          <div class="changelog-item-title">SVG with &lt;use&gt; element in button - sprite reference</div>
+          <div class="changelog-item-code"><span class="syntax-tag">&lt;button&gt;</span>
+  <span class="syntax-tag">&lt;svg</span> <span class="syntax-attr">width</span>=<span class="syntax-val">"18"</span> <span class="syntax-attr">height</span>=<span class="syntax-val">"18"</span> <span class="syntax-attr">viewBox</span>=<span class="syntax-val">"0 0 18 18"</span> <span class="syntax-attr">fill</span>=<span class="syntax-val">"currentColor"</span><span class="syntax-tag">&gt;</span>
+    <span class="syntax-tag">&lt;use</span> <span class="syntax-attr">href</span>=<span class="syntax-val">"#bookmark-icon"</span><span class="syntax-tag">&gt;&lt;/use&gt;</span>
+  <span class="syntax-tag">&lt;/svg&gt;</span>
+  Bookmark
+<span class="syntax-tag">&lt;/button&gt;</span></div>
+        </div>
+
+        <!-- Item 3 -->
+        <div class="changelog-item">
+          <div class="changelog-item-title">SVG with fill from CSS class</div>
+          <div class="changelog-item-code"><span class="syntax-comment">&lt;!-- CSS --&gt;</span>
+.icon-red { <span class="syntax-attr">fill</span>: <span class="syntax-val">red</span>; }
+
+<span class="syntax-comment">&lt;!-- HTML --&gt;</span>
+<span class="syntax-tag">&lt;svg</span> <span class="syntax-attr">class</span>=<span class="syntax-val">"icon-red"</span> <span class="syntax-attr">width</span>=<span class="syntax-val">"18"</span> <span class="syntax-attr">height</span>=<span class="syntax-val">"18"</span> <span class="syntax-attr">viewBox</span>=<span class="syntax-val">"0 0 18 18"</span><span class="syntax-tag">&gt;</span>
+  <span class="syntax-tag">&lt;path</span> <span class="syntax-attr">d</span>=<span class="syntax-val">"M9 1.5C4.8...1.5Z"</span><span class="syntax-tag">/&gt;</span>
+<span class="syntax-tag">&lt;/svg&gt;</span></div>
+        </div>
+
+        <!-- Item 4 -->
+        <div class="changelog-item">
+          <div class="changelog-item-title">Path with CSS classes - fill and stroke from CSS</div>
+          <div class="changelog-item-code"><span class="syntax-comment">&lt;!-- CSS --&gt;</span>
+.c4 { <span class="syntax-attr">fill</span>: <span class="syntax-val">#ff6b35</span>; }
+.b20 { <span class="syntax-attr">stroke</span>: <span class="syntax-val">#2c3e50</span>; }
+
+<span class="syntax-comment">&lt;!-- HTML --&gt;</span>
+<span class="syntax-tag">&lt;svg</span> <span class="syntax-attr">width</span>=<span class="syntax-val">"18"</span> <span class="syntax-attr">height</span>=<span class="syntax-val">"18"</span> <span class="syntax-attr">viewBox</span>=<span class="syntax-val">"0 0 18 18"</span><span class="syntax-tag">&gt;</span>
+  <span class="syntax-tag">&lt;path</span> <span class="syntax-attr">class</span>=<span class="syntax-val">"c4 b20"</span> <span class="syntax-attr">d</span>=<span class="syntax-val">"M2.25 9H15..."</span> <span class="syntax-attr">stroke-width</span>=<span class="syntax-val">"2"</span> <span class="syntax-attr">stroke-linecap</span>=<span class="syntax-val">"round"</span><span class="syntax-tag">/&gt;</span>
+<span class="syntax-tag">&lt;/svg&gt;</span></div>
+        </div>
+
+        <!-- Item 5 -->
+        <div class="changelog-item">
+          <div class="changelog-item-title">SVG with CSS variable (var(--color))</div>
+          <div class="changelog-item-code"><span class="syntax-tag">&lt;button</span> <span class="syntax-attr">style</span>=<span class="syntax-val">"--color: #4CAF50;"</span><span class="syntax-tag">&gt;</span>
+  <span class="syntax-tag">&lt;svg</span> <span class="syntax-attr">width</span>=<span class="syntax-val">"18"</span> <span class="syntax-attr">height</span>=<span class="syntax-val">"18"</span> <span class="syntax-attr">viewBox</span>=<span class="syntax-val">"0 0 18 18"</span> <span class="syntax-attr">style</span>=<span class="syntax-val">"fill: var(--color);"</span><span class="syntax-tag">&gt;</span>
+    <span class="syntax-tag">&lt;path</span> <span class="syntax-attr">d</span>=<span class="syntax-val">"M3.75 9L..."</span> <span class="syntax-attr">stroke-width</span>=<span class="syntax-val">"2"</span> <span class="syntax-attr">stroke-linecap</span>=<span class="syntax-val">"round"</span> <span class="syntax-attr">stroke-linejoin</span>=<span class="syntax-val">"round"</span><span class="syntax-tag">/&gt;</span>
+  <span class="syntax-tag">&lt;/svg&gt;</span>
+  Check
+<span class="syntax-tag">&lt;/button&gt;</span></div>
+        </div>
+
+        <!-- Item 6 -->
+        <div class="changelog-item">
+          <div class="changelog-item-title">SVG inside select element</div>
+          <div class="changelog-item-code"><span class="syntax-tag">&lt;svg</span> <span class="syntax-attr">width</span>=<span class="syntax-val">"18"</span> <span class="syntax-attr">height</span>=<span class="syntax-val">"18"</span> <span class="syntax-attr">viewBox</span>=<span class="syntax-val">"0 0 18 18"</span> <span class="syntax-attr">fill</span>=<span class="syntax-val">"#9333EA"</span><span class="syntax-tag">&gt;</span>
+  <span class="syntax-tag">&lt;rect</span> <span class="syntax-attr">x</span>=<span class="syntax-val">"3"</span> <span class="syntax-attr">y</span>=<span class="syntax-val">"3"</span> <span class="syntax-attr">width</span>=<span class="syntax-val">"12"</span> <span class="syntax-attr">height</span>=<span class="syntax-val">"12"</span> <span class="syntax-attr">rx</span>=<span class="syntax-val">"2"</span><span class="syntax-tag">/&gt;</span>
+<span class="syntax-tag">&lt;/svg&gt;</span></div>
+        </div>
+
+        <!-- Item 7 -->
+        <div class="changelog-item">
+          <div class="changelog-item-title">Nested SVG groups</div>
+          <div class="changelog-item-code"><span class="syntax-tag">&lt;svg</span> <span class="syntax-attr">width</span>=<span class="syntax-val">"18"</span> <span class="syntax-attr">height</span>=<span class="syntax-val">"18"</span> <span class="syntax-attr">viewBox</span>=<span class="syntax-val">"0 0 18 18"</span><span class="syntax-tag">&gt;</span>
+  <span class="syntax-tag">&lt;g</span> <span class="syntax-attr">fill</span>=<span class="syntax-val">"#E91E63"</span><span class="syntax-tag">&gt;</span>
+    <span class="syntax-tag">&lt;g</span> <span class="syntax-attr">transform</span>=<span class="syntax-val">"translate(2, 2)"</span><span class="syntax-tag">&gt;</span>
+      <span class="syntax-tag">&lt;circle</span> <span class="syntax-attr">cx</span>=<span class="syntax-val">"7"</span> <span class="syntax-attr">cy</span>=<span class="syntax-val">"7"</span> <span class="syntax-attr">r</span>=<span class="syntax-val">"5"</span><span class="syntax-tag">/&gt;</span>
+      <span class="syntax-tag">&lt;circle</span> <span class="syntax-attr">cx</span>=<span class="syntax-val">"7"</span> <span class="syntax-attr">cy</span>=<span class="syntax-val">"7"</span> <span class="syntax-attr">r</span>=<span class="syntax-val">"2"</span> <span class="syntax-attr">fill</span>=<span class="syntax-val">"white"</span><span class="syntax-tag">/&gt;</span>
+    <span class="syntax-tag">&lt;/g&gt;</span>
+  <span class="syntax-tag">&lt;/g&gt;</span>
+<span class="syntax-tag">&lt;/svg&gt;</span></div>
+        </div>
+
+        <!-- Item 8 -->
+        <div class="changelog-item">
+          <div class="changelog-item-title">Multiple paths with different fill values</div>
+          <div class="changelog-item-code"><span class="syntax-tag">&lt;svg</span> <span class="syntax-attr">width</span>=<span class="syntax-val">"24"</span> <span class="syntax-attr">height</span>=<span class="syntax-val">"24"</span> <span class="syntax-attr">viewBox</span>=<span class="syntax-val">"0 0 24 24"</span><span class="syntax-tag">&gt;</span>
+  <span class="syntax-tag">&lt;path</span> <span class="syntax-attr">d</span>=<span class="syntax-val">"M12 2L15 9L22...12 2Z"</span> <span class="syntax-attr">fill</span>=<span class="syntax-val">"#FFD700"</span><span class="syntax-tag">/&gt;</span>
+  <span class="syntax-tag">&lt;circle</span> <span class="syntax-attr">cx</span>=<span class="syntax-val">"12"</span> <span class="syntax-attr">cy</span>=<span class="syntax-val">"12"</span> <span class="syntax-attr">r</span>=<span class="syntax-val">"3"</span> <span class="syntax-attr">fill</span>=<span class="syntax-val">"#FF5722"</span><span class="syntax-tag">/&gt;</span>
+<span class="syntax-tag">&lt;/svg&gt;</span></div>
+        </div>
+
+        <!-- Item 9 -->
+        <div class="changelog-item">
+          <div class="changelog-item-title">SVG with xlink:href</div>
+          <div class="changelog-item-code"><span class="syntax-tag">&lt;svg</span> <span class="syntax-attr">width</span>=<span class="syntax-val">"18"</span> <span class="syntax-attr">height</span>=<span class="syntax-val">"18"</span> <span class="syntax-attr">viewBox</span>=<span class="syntax-val">"0 0 18 18"</span> <span class="syntax-attr">fill</span>=<span class="syntax-val">"#2196F3"</span><span class="syntax-tag">&gt;</span>
+  <span class="syntax-tag">&lt;use</span> <span class="syntax-attr">xlink:href</span>=<span class="syntax-val">"#calendar-icon"</span><span class="syntax-tag">&gt;&lt;/use&gt;</span>
+<span class="syntax-tag">&lt;/svg&gt;</span></div>
+        </div>
+
+        <!-- Item 10 -->
+        <div class="changelog-item">
+          <div class="changelog-item-title">SVG with stroke only</div>
+          <div class="changelog-item-code"><span class="syntax-tag">&lt;svg</span> <span class="syntax-attr">width</span>=<span class="syntax-val">"18"</span> <span class="syntax-attr">height</span>=<span class="syntax-val">"18"</span> <span class="syntax-attr">viewBox</span>=<span class="syntax-val">"0 0 18 18"</span> <span class="syntax-attr">fill</span>=<span class="syntax-val">"none"</span> <span class="syntax-attr">stroke</span>=<span class="syntax-val">"#00BCD4"</span> <span class="syntax-attr">stroke-width</span>=<span class="syntax-val">"1.5"</span><span class="syntax-tag">&gt;</span>
+  <span class="syntax-tag">&lt;use</span> <span class="syntax-attr">href</span>=<span class="syntax-val">"#download-icon"</span><span class="syntax-tag">&gt;&lt;/use&gt;</span>
+<span class="syntax-tag">&lt;/svg&gt;</span></div>
+        </div>
+
+        <!-- Item 11 -->
+        <div class="changelog-item">
+          <div class="changelog-item-title">Combination of different shape elements</div>
+          <div class="changelog-item-code"><span class="syntax-tag">&lt;svg</span> <span class="syntax-attr">width</span>=<span class="syntax-val">"24"</span> <span class="syntax-attr">height</span>=<span class="syntax-val">"24"</span> <span class="syntax-attr">viewBox</span>=<span class="syntax-val">"0 0 24 24"</span> <span class="syntax-attr">fill</span>=<span class="syntax-val">"#795548"</span><span class="syntax-tag">&gt;</span>
+  <span class="syntax-tag">&lt;rect</span> <span class="syntax-attr">x</span>=<span class="syntax-val">"4"</span> <span class="syntax-attr">y</span>=<span class="syntax-val">"4"</span> <span class="syntax-attr">width</span>=<span class="syntax-val">"7"</span> <span class="syntax-attr">height</span>=<span class="syntax-val">"7"</span> <span class="syntax-attr">rx</span>=<span class="syntax-val">"1"</span><span class="syntax-tag">/&gt;</span>
+  <span class="syntax-tag">&lt;rect</span> <span class="syntax-attr">x</span>=<span class="syntax-val">"13"</span> <span class="syntax-attr">y</span>=<span class="syntax-val">"4"</span> <span class="syntax-attr">width</span>=<span class="syntax-val">"7"</span> <span class="syntax-attr">height</span>=<span class="syntax-val">"7"</span> <span class="syntax-attr">rx</span>=<span class="syntax-val">"1"</span><span class="syntax-tag">/&gt;</span>
+  <span class="syntax-tag">&lt;rect</span> <span class="syntax-attr">x</span>=<span class="syntax-val">"4"</span> <span class="syntax-attr">y</span>=<span class="syntax-val">"13"</span> <span class="syntax-attr">width</span>=<span class="syntax-val">"7"</span> <span class="syntax-attr">height</span>=<span class="syntax-val">"7"</span> <span class="syntax-attr">rx</span>=<span class="syntax-val">"1"</span><span class="syntax-tag">/&gt;</span>
+  <span class="syntax-tag">&lt;circle</span> <span class="syntax-attr">cx</span>=<span class="syntax-val">"16.5"</span> <span class="syntax-attr">cy</span>=<span class="syntax-val">"16.5"</span> <span class="syntax-attr">r</span>=<span class="syntax-val">"3.5"</span><span class="syntax-tag">/&gt;</span>
+<span class="syntax-tag">&lt;/svg&gt;</span></div>
+        </div>
+
+        <!-- Item 12 -->
+        <div class="changelog-item">
+          <div class="changelog-item-title">Ellipse and line elements</div>
+          <div class="changelog-item-code"><span class="syntax-tag">&lt;svg</span> <span class="syntax-attr">width</span>=<span class="syntax-val">"24"</span> <span class="syntax-attr">height</span>=<span class="syntax-val">"24"</span> <span class="syntax-attr">viewBox</span>=<span class="syntax-val">"0 0 24 24"</span><span class="syntax-tag">&gt;</span>
+  <span class="syntax-tag">&lt;ellipse</span> <span class="syntax-attr">cx</span>=<span class="syntax-val">"12"</span> <span class="syntax-attr">cy</span>=<span class="syntax-val">"12"</span> <span class="syntax-attr">rx</span>=<span class="syntax-val">"8"</span> <span class="syntax-attr">ry</span>=<span class="syntax-val">"5"</span> <span class="syntax-attr">fill</span>=<span class="syntax-val">"#9C27B0"</span><span class="syntax-tag">/&gt;</span>
+  <span class="syntax-tag">&lt;line</span> <span class="syntax-attr">x1</span>=<span class="syntax-val">"4"</span> <span class="syntax-attr">y1</span>=<span class="syntax-val">"12"</span> <span class="syntax-attr">x2</span>=<span class="syntax-val">"20"</span> <span class="syntax-attr">y2</span>=<span class="syntax-val">"12"</span> <span class="syntax-attr">stroke</span>=<span class="syntax-val">"#FFC107"</span> <span class="syntax-attr">stroke-width</span>=<span class="syntax-val">"2"</span><span class="syntax-tag">/&gt;</span>
+<span class="syntax-tag">&lt;/svg&gt;</span></div>
+        </div>
+
+        <!-- Item 13 -->
+        <div class="changelog-item">
+          <div class="changelog-item-title">Polygon and polyline elements</div>
+          <div class="changelog-item-code"><span class="syntax-tag">&lt;svg</span> <span class="syntax-attr">width</span>=<span class="syntax-val">"24"</span> <span class="syntax-attr">height</span>=<span class="syntax-val">"24"</span> <span class="syntax-attr">viewBox</span>=<span class="syntax-val">"0 0 24 24"</span><span class="syntax-tag">&gt;</span>
+  <span class="syntax-tag">&lt;polygon</span> <span class="syntax-attr">points</span>=<span class="syntax-val">"12,2 22,22 2,22"</span> <span class="syntax-attr">fill</span>=<span class="syntax-val">"#FF9800"</span><span class="syntax-tag">/&gt;</span>
+  <span class="syntax-tag">&lt;polyline</span> <span class="syntax-attr">points</span>=<span class="syntax-val">"4,18 12,8 20,18"</span> <span class="syntax-attr">fill</span>=<span class="syntax-val">"none"</span> <span class="syntax-attr">stroke</span>=<span class="syntax-val">"#F44336"</span> <span class="syntax-attr">stroke-width</span>=<span class="syntax-val">"2"</span><span class="syntax-tag">/&gt;</span>
+<span class="syntax-tag">&lt;/svg&gt;</span></div>
+        </div>
+
+        <!-- Item 14 -->
+        <div class="changelog-item">
+          <div class="changelog-item-title">SVG with data-dssvgid attribute</div>
+          <div class="changelog-item-code"><span class="syntax-tag">&lt;svg</span> <span class="syntax-attr">class</span>=<span class="syntax-val">"icon"</span> <span class="syntax-attr">data-dssvgid</span>=<span class="syntax-val">"custom-search-icon"</span> <span class="syntax-attr">fill</span>=<span class="syntax-val">"#3F51B5"</span> <span class="syntax-attr">height</span>=<span class="syntax-val">"18"</span> <span class="syntax-attr">viewBox</span>=<span class="syntax-val">"0 0 18 18"</span> <span class="syntax-attr">width</span>=<span class="syntax-val">"18"</span><span class="syntax-tag">&gt;</span>
+  <span class="syntax-tag">&lt;use</span> <span class="syntax-attr">href</span>=<span class="syntax-val">"#search-icon"</span><span class="syntax-tag">&gt;&lt;/use&gt;</span>
+<span class="syntax-tag">&lt;/svg&gt;</span></div>
+        </div>
+
+        <!-- Item 15 -->
+        <div class="changelog-item">
+          <div class="changelog-item-title">Complex nested structure with multiple groups</div>
+          <div class="changelog-item-code"><span class="syntax-tag">&lt;svg</span> <span class="syntax-attr">width</span>=<span class="syntax-val">"24"</span> <span class="syntax-attr">height</span>=<span class="syntax-val">"24"</span> <span class="syntax-attr">viewBox</span>=<span class="syntax-val">"0 0 24 24"</span><span class="syntax-tag">&gt;</span>
+  <span class="syntax-tag">&lt;g</span> <span class="syntax-attr">fill</span>=<span class="syntax-val">"#607D8B"</span><span class="syntax-tag">&gt;</span>
+    <span class="syntax-tag">&lt;g</span> <span class="syntax-attr">transform</span>=<span class="syntax-val">"translate(4, 4)"</span><span class="syntax-tag">&gt;</span>
+      <span class="syntax-tag">&lt;path</span> <span class="syntax-attr">d</span>=<span class="syntax-val">"M8 0L10 6L16 7L12 11L13 17L8 14L3 17L4 11L0 7L6 6L8 0Z"</span><span class="syntax-tag">/&gt;</span>
+    <span class="syntax-tag">&lt;/g&gt;</span>
+  <span class="syntax-tag">&lt;/g&gt;</span>
+<span class="syntax-tag">&lt;/svg&gt;</span></div>
+        </div>
+
+        <!-- Item 16 -->
+        <div class="changelog-item">
+          <div class="changelog-item-title">SVG without explicit fill</div>
+          <div class="changelog-item-code"><span class="syntax-tag">&lt;button</span> <span class="syntax-attr">style</span>=<span class="syntax-val">"color: #E91E63;"</span><span class="syntax-tag">&gt;</span>
+  <span class="syntax-tag">&lt;svg</span> <span class="syntax-attr">width</span>=<span class="syntax-val">"18"</span> <span class="syntax-attr">height</span>=<span class="syntax-val">"18"</span> <span class="syntax-attr">viewBox</span>=<span class="syntax-val">"0 0 18 18"</span><span class="syntax-tag">&gt;</span>
+    <span class="syntax-tag">&lt;path</span> <span class="syntax-attr">d</span>=<span class="syntax-val">"M9 1.5C4.85...12.75Z"</span><span class="syntax-tag">/&gt;</span>
+  <span class="syntax-tag">&lt;/svg&gt;</span>
+  Inherit Color
+<span class="syntax-tag">&lt;/button&gt;</span></div>
+        </div>
+
+        <!-- Item 17 -->
+        <div class="changelog-item">
+          <div class="changelog-item-title">SVG with pointer-events: none</div>
+          <div class="changelog-item-code"><span class="syntax-tag">&lt;svg</span> <span class="syntax-attr">width</span>=<span class="syntax-val">"18"</span> <span class="syntax-attr">height</span>=<span class="syntax-val">"18"</span> <span class="syntax-attr">viewBox</span>=<span class="syntax-val">"0 0 18 18"</span> <span class="syntax-attr">style</span>=<span class="syntax-val">"pointer-events: none;"</span> <span class="syntax-attr">fill</span>=<span class="syntax-val">"#009688"</span><span class="syntax-tag">&gt;</span>
+  <span class="syntax-tag">&lt;path</span> <span class="syntax-attr">d</span>=<span class="syntax-val">"M9 2.25C5...7.28033Z"</span><span class="syntax-tag">/&gt;</span>
+<span class="syntax-tag">&lt;/svg&gt;</span></div>
+        </div>
+
+        <!-- Item 18 -->
+        <div class="changelog-item">
+          <div class="changelog-item-title">Mix - sprite use + CSS class + transform</div>
+          <div class="changelog-item-code"><span class="syntax-tag">&lt;svg</span> <span class="syntax-attr">class</span>=<span class="syntax-val">"icon-blue"</span> <span class="syntax-attr">width</span>=<span class="syntax-val">"20"</span> <span class="syntax-attr">height</span>=<span class="syntax-val">"20"</span> <span class="syntax-attr">viewBox</span>=<span class="syntax-val">"0 0 18 18"</span> <span class="syntax-attr">transform</span>=<span class="syntax-val">"rotate(45)"</span><span class="syntax-tag">&gt;</span>
+  <span class="syntax-tag">&lt;use</span> <span class="syntax-attr">href</span>=<span class="syntax-val">"#download-icon"</span><span class="syntax-tag">&gt;&lt;/use&gt;</span>
+<span class="syntax-tag">&lt;/svg&gt;</span></div>
+        </div>
+
+        <!-- Item 19 -->
+        <div class="changelog-item">
+          <div class="changelog-item-title">Edge case - path with currentColor</div>
+          <div class="changelog-item-code"><span class="syntax-tag">&lt;button</span> <span class="syntax-attr">style</span>=<span class="syntax-val">"color: #673AB7;"</span><span class="syntax-tag">&gt;</span>
+  <span class="syntax-tag">&lt;svg</span> <span class="syntax-attr">width</span>=<span class="syntax-val">"18"</span> <span class="syntax-attr">height</span>=<span class="syntax-val">"18"</span> <span class="syntax-attr">viewBox</span>=<span class="syntax-val">"0 0 18 18"</span> <span class="syntax-attr">fill</span>=<span class="syntax-val">"currentColor"</span><span class="syntax-tag">&gt;</span>
+    <span class="syntax-tag">&lt;path</span> <span class="syntax-attr">d</span>=<span class="syntax-val">"M15.75 8.25...9.75V8.25Z"</span><span class="syntax-tag">/&gt;</span>
+  <span class="syntax-tag">&lt;/svg&gt;</span>
+  Plus currentColor
+<span class="syntax-tag">&lt;/button&gt;</span></div>
+        </div>
+
+        <!-- Item 20 -->
+        <div class="changelog-item">
+          <div class="changelog-item-title">Mix - sprite use + CSS class + transform</div>
+          <div class="changelog-item-code"><span class="syntax-tag">&lt;svg</span> <span class="syntax-attr">class</span>=<span class="syntax-val">"icon-blue"</span> <span class="syntax-attr">width</span>=<span class="syntax-val">"20"</span> <span class="syntax-attr">height</span>=<span class="syntax-val">"20"</span> <span class="syntax-attr">viewBox</span>=<span class="syntax-val">"0 0 18 18"</span> <span class="syntax-attr">transform</span>=<span class="syntax-val">"rotate(45)"</span><span class="syntax-tag">&gt;</span>
+  <span class="syntax-tag">&lt;use</span> <span class="syntax-attr">href</span>=<span class="syntax-val">"#download-icon"</span><span class="syntax-tag">&gt;&lt;/use&gt;</span>
+<span class="syntax-tag">&lt;/svg&gt;</span></div>
+        </div>
+
       </div>
     </section>
   </div>
@@ -191,11 +410,7 @@
           transition: all 0.2s ease;
           color: rgba(0, 0, 0, 0.98);
           font-weight: 500;
-          text-decoration: underline;
-          text-underline-position: from-font;
-        }
-        .step.link.copy-btn:hover {
-          opacity: 0.8;
+          text-decoration: none;
         }
         .step.link.copy-btn:active {
           transform: scale(0.98);
@@ -203,6 +418,76 @@
       `;
       document.head.appendChild(style);
     }
+  </script>
+  
+  <!-- GSAP Animations -->
+  <script>
+    // Animace pro všechny linky
+    document.addEventListener('DOMContentLoaded', function() {
+      
+      // Underline animace pro linky
+      const allLinks = gsap.utils.toArray('.badge-text a, .changelog-link, .step.link');
+      
+      allLinks.forEach(link => {
+        // Vytvoření underline elementu
+        const underline = document.createElement('span');
+        underline.style.cssText = `
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          width: 0%;
+          height: 1px;
+          background: currentColor;
+        `;
+        
+        // Nastavení relative position pro link
+        link.style.position = 'relative';
+        link.style.display = 'inline-block';
+        link.appendChild(underline);
+        
+        // GSAP animace
+        link.addEventListener('mouseenter', () => {
+          gsap.to(underline, {
+            width: '100%',
+            duration: 0.2,
+            ease: 'power2.out'
+            
+          });
+        });
+        
+        link.addEventListener('mouseleave', () => {
+          gsap.to(underline, {
+            width: '0%',
+            duration: 0.2,
+            ease: 'power2.in'
+            
+          });
+        });
+      });
+      
+      // Animace pro download button
+      const downloadBtn = gsap.utils.toArray('.step.download-btn');
+      downloadBtn.forEach(btn => {
+        btn.addEventListener('mouseenter', () => {
+          gsap.to(btn, {
+            scale: 1.02,
+            y: -2,
+            duration: 0.3,
+            ease: 'power2.out'
+          });
+        });
+        
+        btn.addEventListener('mouseleave', () => {
+          gsap.to(btn, {
+            scale: 1,
+            y: 0,
+            duration: 0.3,
+            ease: 'power2.out'
+          });
+        });
+      });
+      
+    });
   </script>
 </body>
 </html>

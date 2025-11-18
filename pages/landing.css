@@ -80,8 +80,7 @@ body {
 .badge-text a {
   font-weight: 500;
   color: rgba(0, 0, 0, 0.98);
-  text-decoration: underline;
-  text-underline-position: from-font;
+  text-decoration: none;
 }
 
 .badge-text span {
@@ -130,7 +129,6 @@ body {
 
 .step.download-btn:hover {
   background: #000;
-  transform: translateY(-1px);
 }
 
 .step.secondary {
@@ -143,8 +141,7 @@ body {
   line-height: 14px;
   font-weight: 400;
   color: rgba(0, 0, 0, 0.98);
-  text-decoration: underline;
-  text-underline-position: from-font;
+  text-decoration: none;
 }
 
 .step.primary {
@@ -159,7 +156,7 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 14px;
   line-height: 14px;
-  font-weight: 400;
+  font-weight: 500;
   cursor: pointer;
   padding: 0;
   transition: all 0.2s ease;
@@ -173,12 +170,121 @@ body {
   padding-left: 4px;
 }
 
-.step.link.copy-btn:hover {
-  opacity: 0.8;
-}
-
 .step.link.copy-btn:active {
   transform: scale(0.98);
+}
+
+/* Change Log Section */
+.changelog-section {
+  padding: 0px 0 120px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.changelog-title {
+  font-size: 72px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.72px;
+  margin-bottom: 48px;
+  color: rgba(0, 0, 0, 0.98);
+}
+
+.changelog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  margin-bottom: 120px;
+}
+
+.changelog-description {
+  max-width: 640px;
+}
+
+.changelog-text {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 32px;
+  letter-spacing: -0.24px;
+  margin-bottom: 24px;
+  color: rgba(0, 0, 0, 0.98);
+}
+
+.changelog-info {
+  display: flex;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 14px;
+}
+
+.changelog-link {
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.98);
+  text-decoration: none;
+}
+
+.changelog-meta {
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+/* Changelog Grid */
+.changelog-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 82px 96px;
+  width: 100%;
+}
+
+.changelog-item {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.changelog-item-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.98);
+}
+
+.changelog-item-code {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+  color: rgba(0, 0, 0, 0.5);
+  white-space: pre-wrap;
+  transition: color 0.2s ease;
+}
+
+/* Syntax Highlighting */
+.syntax-tag,
+.syntax-attr,
+.syntax-val,
+.syntax-comment,
+.syntax-text {
+  color: inherit;
+  transition: color 0.2s ease;
+}
+
+.changelog-item:hover .changelog-item-code {
+  color: #000;
+}
+
+.changelog-item:hover .syntax-tag {
+  color: rgba(134, 13, 13, 0.98);
+}
+
+.changelog-item:hover .syntax-attr {
+  color: #e60d0d;
+}
+
+.changelog-item:hover .syntax-val {
+  color: #0000FF;
+}
+
+.changelog-item:hover .syntax-comment {
+  color: rgba(0, 0, 0, 0.5);
 }
 
 /* Responsive */
@@ -222,6 +328,15 @@ body {
   .step.download-btn {
     text-align: center;
   }
+
+  .changelog-title {
+    font-size: 48px;
+  }
+  
+  .changelog-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -253,5 +368,8 @@ body {
     border-radius: 16px;
     padding: 20px;
   }
+  
+  .changelog-title {
+    font-size: 36px;
+  }
 }
-

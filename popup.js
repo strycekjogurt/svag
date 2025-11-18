@@ -801,32 +801,17 @@ function recolorToBlack(svg) {
 }
 
 async function loadRecentIcons(token) {
-  // TEMPORARY: Skrýt preview dokud API nefunguje
-  console.log('⚠️  Icon preview temporarily disabled due to API issues');
-  console.log('💡 Click "Open Gallery" button to view your icons');
-  
-  iconsList.innerHTML = '';
-  const messageDiv = document.createElement('div');
-  messageDiv.style.cssText = 'text-align: center; padding: 20px; color: #666; font-size: 13px;';
-  messageDiv.innerHTML = `
-    <div style="font-size: 24px; margin-bottom: 8px;">👇</div>
-    <div>Click "Open Gallery" below</div>
-    <div style="font-size: 11px; margin-top: 4px;">to view your icons</div>
-  `;
-  iconsList.appendChild(messageDiv);
-  return;
-  
-  // DISABLED: API call (returns 401)
-  /* 
   try {
     console.log('🔄 Loading recent icons...');
     console.log('🔑 Token length:', token?.length);
+    console.log('🔑 Token preview:', token?.substring(0, 30) + '...');
     
     // Clear icons list and show loading state
     iconsList.innerHTML = '<div class="loading-state">Loading...</div>';
     
-    // Try API first (quick)
-    console.log('📍 Trying API:', apiUrl);
+    // Try API with detailed logging
+    console.log('📍 API URL:', apiUrl);
+    console.log('📤 Sending request with Authorization header');
     
     try {
       const [iconsResponse, statsResponse] = await Promise.all([
@@ -852,6 +837,13 @@ async function loadRecentIcons(token) {
         icons: iconsResponse.status,
         stats: statsResponse.status
       });
+      
+      // Pokud API vrátí 401, logovat response body
+      if (iconsResponse.status === 401 || statsResponse.status === 401) {
+        const errorBody = await iconsResponse.clone().text();
+        console.error('❌ API returned 401:', errorBody);
+        console.log('🔍 Server says token is invalid or missing');
+      }
       
       if (iconsResponse.ok && statsResponse.ok) {
         console.log('✅ API call successful, loading from API');

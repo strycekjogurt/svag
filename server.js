@@ -203,23 +203,41 @@ function calculateSizes(svgContent) {
 
 // Middleware pro autentizaci
 async function authenticate(req, res, next) {
+  // DEBUG: Log všechny headers
+  console.log('🔍 [AUTH] Request headers:', {
+    authorization: req.headers.authorization ? 'present' : 'MISSING',
+    contentType: req.headers['content-type'],
+    origin: req.headers.origin,
+    userAgent: req.headers['user-agent']?.substring(0, 50)
+  });
+  
   const token = req.headers.authorization?.split(' ')[1];
   
   if (!token) {
-    console.log('⚠️ Authentication failed: No token provided');
+    console.log('⚠️  [AUTH] Authentication failed: No token provided');
+    console.log('    Authorization header:', req.headers.authorization);
     return res.status(401).json({ error: 'No token provided' });
   }
   
-  const { data: { user }, error } = await supabase.auth.getUser(token);
+  console.log('🔑 [AUTH] Token received, length:', token.length);
+  console.log('    Token preview:', token.substring(0, 30) + '...');
   
-  if (error || !user) {
-    console.log('⚠️ Authentication failed: Invalid token', error?.message);
-    return res.status(401).json({ error: 'Invalid token' });
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    
+    if (error || !user) {
+      console.log('⚠️  [AUTH] Supabase validation failed:', error?.message || 'No user');
+      console.log('    Error details:', JSON.stringify(error, null, 2));
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+    
+    console.log('✅ [AUTH] Authentication successful:', user.email);
+    req.user = user;
+    next();
+  } catch (err) {
+    console.error('❌ [AUTH] Exception during authentication:', err);
+    return res.status(401).json({ error: 'Authentication error' });
   }
-  
-  console.log('✅ Authentication successful:', user.email);
-  req.user = user;
-  next();
 }
 
 // Middleware pro admin autentizaci
