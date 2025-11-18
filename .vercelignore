@@ -17,10 +17,13 @@ config.js
 manifest.json
 svag-chrome-extension/
 
-# Icons are now needed for favicon - DO NOT IGNORE
+# Icons are now needed for favicon and social sharing - DO NOT IGNORE
+# ALL icon files are needed for the website
 # icons/icon16.png
 # icons/icon48.png
 # icons/icon128.png
+# icons/Cover.png
+# icons/favicon.ico
 # icons/README.md
 
 # Documentation
