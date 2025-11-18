@@ -1,18 +1,44 @@
-# Kompletní detekce SVG v1.1.3
+# Kompletní detekce SVG v1.1.4
 
 ## Přehled změn
 
-### 🔧 v1.1.3 - KRITICKÁ OPRAVA (Aktuální verze)
+### 🔧 v1.1.4 - KRITICKÁ OPRAVA (Aktuální verze)
 
-**Problém:** Extension stahovala celý modul/wrapper místo konkrétní SVG ikony.
+**Problém #2:** Extension stále stahovala celý modul a nerozpoznávala `<use>` elementy uvnitř SVG. Soubory byly pojmenovány podle className wrapperu (např. "module.svg") místo podle data atributů ikony.
+
+**Řešení:**
+
+1. **`getSvgData()` - Detekce `<use>` elementů:**
+   ```javascript
+   // Když najde SVG element, NEJPRVE zkontroluje <use> uvnitř:
+   const useElement = element.querySelector('use[href^="#"], use[xlink\\:href^="#"]');
+   if (useElement) {
+     const resolvedContent = resolveUseElement(useElement);
+     return { type: 'use-resolved', content: resolvedContent };
+   }
+   ```
+
+2. **`extractIconName()` - Robustnější extrakce názvu:**
+   - ✅ Pokud dostane wrapper, najde SVG uvnitř
+   - ✅ Podpora pro `data-dssvgid` atribut (NEJVYŠŠÍ priorita)
+   - ✅ Nová priorita: `data-dssvgid` > `data-icon` > `data-name` > `id` > `aria-label` > `title` > `className`
+   - ✅ Debug logy pro sledování odkud byl název extrahován
+
+**Výsledek:** 
+- 🎯 Ikona `<svg data-dssvgid="calendar">` se stáhne jako **"calendar.svg"**, ne "module.svg"!
+- 🎯 `<use xlink:href="#dist__calendar___2T2Oy">` se správně vyřeší na konkrétní SVG obsah!
+
+---
+
+### 🔧 v1.1.3 - Priorita detekce
+
+**Problém #1:** Extension stahovala celý modul/wrapper místo konkrétní SVG ikony.
 
 **Řešení:** Změněna priorita detekce v `findSvgInElement()`:
 - ✅ `<svg>` tagy mají nyní NEJVYŠŠÍ prioritu
 - ✅ `elementFromPoint()` zkontroluje dříve (přesnější detekce pod kurzorem)
 - ✅ `isSvgElement()` až jako FALLBACK (pro CSS-based SVG)
 - ✅ Odstraněna kontrola `isSvgElement()` z children loop (neklasifikuje wrappery jako SVG)
-
-**Výsledek:** Nyní se stahuje **konkrétní SVG ikona**, ne celý kontejner! 🎯
 
 ---
 

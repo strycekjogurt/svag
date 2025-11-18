@@ -592,8 +592,29 @@ function getSvgData(element) {
   
   const tagName = element.tagName?.toLowerCase();
   
-  // Případ 1: Inline SVG
+  // Případ 1: Inline SVG - ALE NEJPRVE zkontrolovat <use> elementy!
   if (tagName === 'svg') {
+    // NOVÉ: Zkontrolovat, zda SVG obsahuje <use> element s interní referencí
+    const useElement = element.querySelector('use[href^="#"], use[xlink\\:href^="#"]');
+    if (useElement) {
+      console.log('[svag] SVG obsahuje <use> element, resolving...');
+      const href = useElement.getAttribute('href') || useElement.getAttribute('xlink:href');
+      
+      // Pokud je to interní reference, vyřešit ji
+      if (href && href.startsWith('#')) {
+        const resolvedContent = resolveUseElement(useElement);
+        if (resolvedContent) {
+          console.log('[svag] <use> element úspěšně vyřešen');
+          return {
+            type: 'use-resolved',
+            content: resolvedContent,
+            element: element
+          };
+        }
+      }
+    }
+    
+    // Standardní inline SVG (bez <use> nebo pokud se nepodařilo vyřešit)
     return {
       type: 'inline',
       content: element.outerHTML,
@@ -1138,12 +1159,23 @@ function sanitizeFilename(name) {
 function extractIconName(svgElement) {
   if (!svgElement) return null;
   
+  // NOVÉ: Pokud element není SVG, zkusit najít SVG uvnitř
+  const tagName = svgElement.tagName?.toLowerCase();
+  if (tagName !== 'svg' && tagName !== 'img') {
+    const svgChild = svgElement.querySelector('svg');
+    if (svgChild) {
+      console.log('[svag] extractIconName: Našel jsem SVG uvnitř wrapperu, používám SVG element');
+      svgElement = svgChild;
+    }
+  }
+  
   // Získat všechny možné zdroje názvu
   const className = svgElement.getAttribute('class') || '';
   const id = svgElement.getAttribute('id') || '';
   const ariaLabel = svgElement.getAttribute('aria-label') || '';
   const dataIcon = svgElement.getAttribute('data-icon') || '';
   const dataName = svgElement.getAttribute('data-name') || '';
+  const dataDssvgid = svgElement.getAttribute('data-dssvgid') || ''; // NOVÉ: Podpora pro data-dssvgid
   const title = svgElement.querySelector('title')?.textContent || '';
   
   // Patterns pro extrakci názvu ikony
@@ -1168,35 +1200,44 @@ function extractIconName(svgElement) {
     /^icon[-_]([a-z0-9-]+)$/i,
   ];
   
-  // Zkusit všechny zdroje
+  // Zkusit všechny zdroje (PRIORITA!)
   const sources = [
-    { value: dataIcon, priority: 1 },
-    { value: dataName, priority: 1 },
-    { value: id, priority: 2 },
-    { value: className, priority: 3 },
-    { value: ariaLabel, priority: 4 },
-    { value: title, priority: 5 }
+    { value: dataDssvgid, priority: 0, name: 'data-dssvgid' }, // NEJVYŠŠÍ priorita
+    { value: dataIcon, priority: 1, name: 'data-icon' },
+    { value: dataName, priority: 1, name: 'data-name' },
+    { value: id, priority: 2, name: 'id' },
+    { value: ariaLabel, priority: 3, name: 'aria-label' },
+    { value: title, priority: 4, name: 'title' },
+    { value: className, priority: 5, name: 'class' } // NEJNIŽŠÍ priorita
   ];
   
   for (const source of sources) {
     if (!source.value) continue;
     
+    // Pokud máme data-dssvgid, data-icon nebo data-name, použij PŘÍMO (nejvyšší priorita)
+    if (source.name === 'data-dssvgid' || source.name === 'data-icon' || source.name === 'data-name') {
+      const sanitized = sanitizeFilename(source.value);
+      if (sanitized) {
+        console.log(`[svag] Název extrahován z ${source.name}: ${sanitized}`);
+        return sanitized;
+      }
+    }
+    
     // Zkusit všechny patterns
     for (const pattern of patterns) {
       const match = source.value.match(pattern);
       if (match && match[1]) {
-        return sanitizeFilename(match[1]);
+        const sanitized = sanitizeFilename(match[1]);
+        console.log(`[svag] Název extrahován z ${source.name} (pattern): ${sanitized}`);
+        return sanitized;
       }
     }
     
-    // Pokud máme data-icon nebo data-name, použij přímo
-    if ((source.value === dataIcon || source.value === dataName) && source.value) {
-      return sanitizeFilename(source.value);
-    }
-    
     // Pokud máme title kratší než 30 znaků, použij ho
-    if (source.value === title && title.length > 0 && title.length < 30) {
-      return sanitizeFilename(title);
+    if (source.name === 'title' && source.value.length > 0 && source.value.length < 30) {
+      const sanitized = sanitizeFilename(source.value);
+      console.log(`[svag] Název extrahován z title: ${sanitized}`);
+      return sanitized;
     }
   }
   
@@ -1677,9 +1718,11 @@ svgMutationObserver.observe(document.body, {
   subtree: true
 });
 
-console.log('svag extension loaded - enhanced SVG detection v1.1.3');
+console.log('svag extension loaded - enhanced SVG detection v1.1.4');
 console.log('Supported SVG types: inline, img, data-uri, object, embed, background, sprite, mask, clip-path, pseudo-elements, picture, iframe, css-cursor, css-list-style, css-border-image, css-filter, css-shape-outside, foreign-object, shadow-dom, use-resolved');
 console.log('MutationObserver: active - tracking dynamic SVG additions');
-console.log('OPRAVA v1.1.3: Změněna priorita detekce - nyní se stahuje konkrétní SVG ikona, ne celý wrapper/modul');
-console.log('Enhanced detection: SVG tagy mají přednost před elementy s SVG vlastnostmi');
+console.log('🔧 KRITICKÁ OPRAVA v1.1.4:');
+console.log('  ✅ getSvgData() nyní detekuje <use> elementy uvnitř SVG a resolvuje je');
+console.log('  ✅ extractIconName() preferuje data-dssvgid a data-* atributy');
+console.log('  ✅ Správné pojmenování ikon podle data atributů, ne podle wrapperu');
 
