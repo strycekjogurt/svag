@@ -30,6 +30,70 @@ let apiUrl = 'https://svag.pro';
 let currentScheme = 'white-black';
 let currentEmail = '';
 
+// Helper funkce pro validaci a refresh tokenu
+async function getValidToken(apiToken, refreshToken) {
+  if (!apiToken) {
+    console.log('❌ No token provided');
+    return null;
+  }
+  
+  try {
+    // Dekódovat JWT a zkontrolovat expiraci
+    const payload = JSON.parse(atob(apiToken.split('.')[1]));
+    const expiresAt = payload.exp * 1000;
+    const now = Date.now();
+    const timeUntilExpire = (expiresAt - now) / 1000 / 60; // minuty
+    
+    console.log(`🔑 Token expires in ${timeUntilExpire.toFixed(1)} minutes`);
+    
+    // Pokud token už vypršel, nelze ho použít
+    if (expiresAt <= now) {
+      console.error('❌ Token EXPIRED, cannot use');
+      return null;
+    }
+    
+    // Pokud token vyprší brzy a máme refreshToken, zkusit refresh
+    if (expiresAt - now < 5 * 60 * 1000 && refreshToken) {
+      console.log('🔄 Token expiring soon, attempting refresh...');
+      
+      try {
+        const response = await fetch(`${apiUrl}/api/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken })
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('✅ Token refreshed successfully');
+          
+          // Uložit nový token
+          await chrome.storage.sync.set({
+            apiToken: data.token,
+            refreshToken: data.refreshToken
+          });
+          
+          return data.token;
+        } else {
+          console.warn('⚠️  Token refresh failed, using original token');
+          return apiToken;
+        }
+      } catch (error) {
+        console.error('❌ Refresh error:', error);
+        return apiToken; // Fallback na původní token
+      }
+    }
+    
+    // Token je validní a není třeba refresh
+    console.log('✅ Token is valid, no refresh needed');
+    return apiToken;
+    
+  } catch (error) {
+    console.error('❌ Error checking token:', error);
+    return null;
+  }
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('🚀 Popup initialized');
@@ -63,7 +127,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (result.apiToken && result.userEmail) {
     // User is logged in
     console.log('✅ User is logged in:', result.userEmail);
-    showLoggedIn(result.userEmail, result.apiToken);
+    
+    // Zkontrolovat validitu tokenu a případně refreshnout
+    const validToken = await getValidToken(result.apiToken, result.refreshToken);
+    if (validToken) {
+      showLoggedIn(result.userEmail, validToken);
+    } else {
+      console.error('❌ Token is invalid and cannot be refreshed');
+      showLoginForm();
+    }
   } else if (result.pendingEmail) {
     // Obnovit code step (čeká na OTP kód)
     console.log('🔄 Restoring code step for:', result.pendingEmail);
@@ -731,6 +803,8 @@ function recolorToBlack(svg) {
 async function loadRecentIcons(token) {
   try {
     console.log('🔄 Loading recent icons from API...');
+    console.log('🔑 Token length:', token?.length);
+    console.log('🔑 Token preview:', token?.substring(0, 30) + '...');
     
     // Clear icons list and show loading state
     iconsList.innerHTML = '<div class="loading-state">Loading...</div>';
