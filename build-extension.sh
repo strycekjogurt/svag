@@ -38,7 +38,6 @@ zip -r "$OUTPUT_FILE" \
   content.js \
   content.css \
   background.js \
-  activation-sync.js \
   config.js \
   icons/ \
   Gallery/gallery-sync.js \
