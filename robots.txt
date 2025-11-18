@@ -21,6 +21,6 @@ Allow: /icons/
 Allow: /iframe/
 Allow: /Gallery/
 
-# Sitemap (pokud bude v budoucnu vytvořena)
-# Sitemap: https://www.svag.pro/sitemap.xml
+# Sitemap
+Sitemap: https://www.svag.pro/sitemap.xml
 

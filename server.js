@@ -67,6 +67,12 @@ app.get('/robots.txt', (req, res) => {
   res.sendFile(join(__dirname, 'robots.txt'));
 });
 
+// Sitemap.xml route
+app.get('/sitemap.xml', (req, res) => {
+  res.type('application/xml');
+  res.sendFile(join(__dirname, 'sitemap.xml'));
+});
+
 // Inicializace Supabase
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
