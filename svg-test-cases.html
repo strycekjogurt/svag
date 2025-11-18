@@ -870,6 +870,69 @@
             </li>
         </ol>
     </div>
+    
+    <!-- Test 20: External sprite symbol (Design System simulation) -->
+    <div class="test-case">
+        <h3>Test 20: External Design System Icon (symbol not in DOM)</h3>
+        <div class="test-case-content">
+            <div class="preview-area">
+                <button class="ds-button">
+                    <svg class="icon-module_icon_z3YpC" data-dssvgid="share" fill="var(--color-primary, #2196F3)" height="18" role="none" viewBox="0 0 18 18" width="18">
+                        <use xlink:href="#dist__share___297H8"></use>
+                    </svg>
+                    Share Icon (External Sprite)
+                </button>
+            </div>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-label">HTML</span>
+                    <button class="copy-button" onclick="copyCode(this, 'code20')">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                        </svg>
+                        Copy
+                    </button>
+                </div>
+                <div class="code-content">
+                    <pre id="code20">&lt;svg class="icon-module_icon_z3YpC" data-dssvgid="share" fill="var(--color-primary, #2196F3)" height="18" role="none" viewBox="0 0 18 18" width="18"&gt;
+  &lt;use xlink:href="#dist__share___297H8"&gt;&lt;/use&gt;
+&lt;/svg&gt;</pre>
+                </div>
+            </div>
+            <div class="test-notes">
+                <p><strong>Simulace:</strong> Tento test simuluje ikonu z design systému, kde symbol není v DOM.</p>
+                <p><strong>Očekávané chování:</strong> Extension by měl detekovat SVG, extrahovat rendered podobu včetně computed fill barvy, a pojmenovat soubor jako "share.svg" díky data-dssvgid atributu.</p>
+                <p><strong>Strategie extrakce:</strong></p>
+                <ul>
+                    <li>1. Rendered SVG extraction (okamžitá)</li>
+                    <li>2. External sprite download (async)</li>
+                    <li>3. Computed styles serialization (fallback)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .ds-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            font-family: system-ui;
+        }
+        
+        .ds-button:hover {
+            background: #f5f5f5;
+        }
+        
+        :root {
+            --color-primary: #2196F3;
+        }
+    </style>
 
     <script>
         function copyCode(button, codeId) {

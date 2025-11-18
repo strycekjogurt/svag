@@ -466,6 +466,177 @@ function extractCleanSvg(svgElement) {
   };
 }
 
+// === NOVÉ v1.3.0: Podpora pro externí sprite soubory ===
+
+/**
+ * Extrahuje rendered SVG z <use> elementu i když symbol není v DOM
+ * Používá computed styles a serializaci pro získání skutečné vizuální reprezentace
+ * @param {Element} svgElement - SVG element obsahující <use>
+ * @returns {string|null} Serializovaný SVG nebo null
+ */
+function extractRenderedSvgFromUse(svgElement) {
+  console.log('[svag v1.3.0] Extracting rendered SVG from <use> element...');
+  
+  try {
+    const useElement = svgElement.querySelector('use');
+    if (!useElement) return null;
+    
+    // Získat computed styles z parent SVG
+    const svgStyles = window.getComputedStyle(svgElement);
+    const useStyles = window.getComputedStyle(useElement);
+    
+    // Klonovat celý SVG
+    const clonedSvg = svgElement.cloneNode(true);
+    const clonedUse = clonedSvg.querySelector('use');
+    
+    // Aplikovat computed fill a stroke na <use> element
+    // Získat computed hodnoty (už vyřešené CSS variables)
+    const computedFill = svgStyles.fill || useStyles.fill;
+    const computedStroke = svgStyles.stroke || useStyles.stroke;
+    
+    // Získat původní atributy pro případ, že computed nefunguje
+    const originalFill = svgElement.getAttribute('fill');
+    
+    if (computedFill && computedFill !== 'none' && computedFill !== 'rgba(0, 0, 0, 0)' && !computedFill.includes('var(')) {
+      clonedUse.setAttribute('fill', computedFill);
+    } else if (originalFill && !originalFill.includes('var(')) {
+      clonedUse.setAttribute('fill', originalFill);
+    }
+    
+    if (computedStroke && computedStroke !== 'none' && computedStroke !== 'rgba(0, 0, 0, 0)') {
+      clonedUse.setAttribute('stroke', computedStroke);
+      const strokeWidth = svgStyles.strokeWidth || useStyles.strokeWidth;
+      if (strokeWidth) clonedUse.setAttribute('stroke-width', strokeWidth);
+    }
+    
+    // Odstranit inline fill ze SVG pokud je nastaven, aby <use> fill fungoval
+    clonedSvg.removeAttribute('fill');
+    
+    console.log('[svag v1.3.0] Successfully extracted rendered SVG');
+    return clonedSvg.outerHTML;
+    
+  } catch (error) {
+    console.error('[svag v1.3.0] Error extracting rendered SVG:', error);
+    return null;
+  }
+}
+
+/**
+ * Pokusí se najít a stáhnout externí sprite soubor
+ * @param {string} symbolId - ID symbolu k nalezení
+ * @returns {Promise<Object|null>} Promise s objektem {symbol, spriteUrl} nebo null
+ */
+async function fetchSpriteSymbol(symbolId) {
+  console.log(`[svag v1.3.0] Searching for sprite file containing symbol: ${symbolId}`);
+  
+  // Hledat možné sprite soubory v dokumentu
+  const possibleSpriteUrls = new Set();
+  
+  // 1. Hledat ve všech <use> elementech s externími odkazy
+  document.querySelectorAll('use[href], use[xlink\\:href]').forEach(use => {
+    const href = use.getAttribute('href') || use.getAttribute('xlink:href');
+    if (href && href.includes('.svg')) {
+      const spriteUrl = href.split('#')[0];
+      possibleSpriteUrls.add(spriteUrl);
+    }
+  });
+  
+  // 2. Hledat ve všech <img> a <object> s .svg obsahujícím "sprite"
+  document.querySelectorAll('img[src*=".svg"], object[data*=".svg"]').forEach(el => {
+    const url = el.src || el.getAttribute('data');
+    if (url && (url.includes('sprite') || url.includes('icon'))) {
+      possibleSpriteUrls.add(url);
+    }
+  });
+  
+  // 3. Hledat v <link> preload nebo resource hints
+  document.querySelectorAll('link[href*=".svg"]').forEach(link => {
+    const href = link.getAttribute('href');
+    if (href && (href.includes('sprite') || href.includes('icon'))) {
+      possibleSpriteUrls.add(href);
+    }
+  });
+  
+  console.log(`[svag v1.3.0] Found ${possibleSpriteUrls.size} possible sprite files`);
+  
+  // Zkusit stáhnout každý sprite a najít symbol
+  for (const spriteUrl of possibleSpriteUrls) {
+    try {
+      const response = await fetch(spriteUrl);
+      if (!response.ok) continue;
+      
+      const svgText = await response.text();
+      
+      // Parsovat SVG
+      const parser = new DOMParser();
+      const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');
+      
+      // Najít symbol v sprite souboru
+      const symbol = svgDoc.getElementById(symbolId);
+      if (symbol) {
+        console.log(`[svag v1.3.0] ✅ Found symbol in sprite: ${spriteUrl}`);
+        return {
+          symbol: symbol,
+          spriteUrl: spriteUrl,
+          svgDoc: svgDoc
+        };
+      }
+    } catch (error) {
+      console.debug(`[svag v1.3.0] Could not fetch sprite: ${spriteUrl}`, error);
+    }
+  }
+  
+  console.log(`[svag v1.3.0] ❌ Symbol ${symbolId} not found in any sprite file`);
+  return null;
+}
+
+/**
+ * Serializuje SVG včetně všech computed stylů (fallback metoda)
+ * @param {Element} svgElement - SVG element k serializaci
+ * @returns {string} Serializovaný SVG
+ */
+function serializeSvgWithComputedStyles(svgElement) {
+  console.log('[svag v1.3.0] Serializing SVG with computed styles...');
+  
+  const clonedSvg = svgElement.cloneNode(true);
+  
+  // Projít všechny elementy a aplikovat computed styles
+  function applyComputedStyles(element, originalElement) {
+    if (!originalElement || !element) return;
+    
+    try {
+      const computed = window.getComputedStyle(originalElement);
+      const importantStyles = ['fill', 'stroke', 'stroke-width', 'opacity', 'transform', 'color'];
+      
+      importantStyles.forEach(prop => {
+        let value = computed[prop];
+        if (!value || value === 'none' || value === 'rgba(0, 0, 0, 0)') return;
+        
+        // Konvertovat CSS variables na skutečné hodnoty
+        if (value.includes('var(')) {
+          const computedValue = computed.getPropertyValue(prop);
+          if (computedValue) value = computedValue;
+        }
+        
+        // Aplikovat jako atribut (ne inline style)
+        element.setAttribute(prop, value);
+      });
+    } catch (error) {
+      console.debug('[svag v1.3.0] Error applying computed styles:', error);
+    }
+    
+    // Rekurzivně pro děti
+    Array.from(element.children).forEach((child, i) => {
+      if (originalElement.children[i]) {
+        applyComputedStyles(child, originalElement.children[i]);
+      }
+    });
+  }
+  
+  applyComputedStyles(clonedSvg, svgElement);
+  return clonedSvg.outerHTML;
+}
+
 // Helper funkce pro resolving <use> elementů s interními referencemi (vylepšená v1.1.2)
 function resolveUseElement(useElement) {
   const href = useElement.getAttribute('href') || useElement.getAttribute('xlink:href');
@@ -506,13 +677,51 @@ function resolveUseElement(useElement) {
   }
   
   if (!referencedElement) {
-    console.warn(`[svag] Symbol/element with id "${symbolId}" not found anywhere in document`);
-    // Vypsat všechny dostupné symboly pro debugging
+    console.warn(`[svag v1.3.0] Symbol/element with id "${symbolId}" not found in DOM`);
+    
+    // Vypsat dostupné symboly pro debugging
     const allSymbols = document.querySelectorAll('symbol');
     if (allSymbols.length > 0) {
-      console.log(`[svag] Available symbols (${allSymbols.length}):`, 
+      console.log(`[svag v1.3.0] Available symbols in DOM (${allSymbols.length}):`, 
         Array.from(allSymbols).slice(0, 10).map(s => s.id).filter(id => id));
     }
+    
+    // 🆕 STRATEGIE 1: Zkusit extrahovat rendered SVG (nejrychlejší)
+    const parentSvg = useElement.closest('svg');
+    if (parentSvg) {
+      console.log('[svag v1.3.0] Attempting to extract rendered SVG...');
+      const renderedSvg = extractRenderedSvgFromUse(parentSvg);
+      if (renderedSvg) {
+        console.log('[svag v1.3.0] ✅ Successfully extracted rendered SVG');
+        return renderedSvg;
+      }
+    }
+    
+    // 🆕 STRATEGIE 2: Pokusit se najít a stáhnout sprite soubor (asynchronní)
+    console.log('[svag v1.3.0] Attempting to fetch external sprite file...');
+    fetchSpriteSymbol(symbolId).then(result => {
+      if (result) {
+        console.log('[svag v1.3.0] ✅ Symbol found in external sprite:', result.spriteUrl);
+        // Symbol byl nalezen - mohli bychom ho cachovat pro budoucí použití
+        // Pro teď jen logujeme úspěch
+      } else {
+        console.log('[svag v1.3.0] ℹ️ Symbol not found in any external sprite');
+      }
+    }).catch(error => {
+      console.debug('[svag v1.3.0] Error fetching sprite:', error);
+    });
+    
+    // 🆕 STRATEGIE 3: Fallback - serializovat se všemi computed styles
+    if (parentSvg) {
+      console.log('[svag v1.3.0] Using fallback: serializing with computed styles...');
+      const serialized = serializeSvgWithComputedStyles(parentSvg);
+      if (serialized) {
+        console.log('[svag v1.3.0] ✅ Fallback serialization successful');
+        return serialized;
+      }
+    }
+    
+    console.error('[svag v1.3.0] ❌ All extraction strategies failed');
     return null;
   }
   
