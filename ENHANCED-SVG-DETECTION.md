@@ -1,8 +1,74 @@
-# Kompletní detekce SVG v1.1.7
+# Kompletní detekce SVG v1.1.8
 
 ## Přehled změn
 
-### 🚀 v1.1.7 - SVG PATH COMPILER (Aktuální verze)
+### 🚀 v1.1.8 - KRITICKÁ OPRAVA COMPILERU (Aktuální verze)
+
+**Problém v1.1.7:** Compiler IGNOROVAL `<use>` elementy!
+- ❌ `<use>` se nekopírovaly, zůstávaly v innerHTML
+- ❌ Výsledné SVG obsahovalo `<use xlink:href="#...">` BEZ namespace definic
+- ❌ Error: "Namespace prefix xlink for href on use is not defined"
+
+**Řešení v1.1.8:** Compiler EXPANDUJE `<use>` elementy!
+
+Místo kopírování `<use>` elementů, compiler je nyní **expanduje inline**:
+
+```javascript
+// Když compiler najde <use>:
+if (tagName === 'use') {
+  const href = sourceShape.getAttribute('href') || sourceShape.getAttribute('xlink:href');
+  const symbolId = href.substring(1); // #icon-name → icon-name
+  
+  // Najít referencovaný symbol/element
+  let referencedElement = document.getElementById(symbolId);
+  
+  // Zkompilovat OBSAH symbolu (rekurzivně)
+  const expandedShapes = compileSvgShapes(referencedElement);
+  
+  // Aplikovat transform z <use> (pokud existuje)
+  if (useTransform) {
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('transform', useTransform);
+    expandedShapes.forEach(shape => g.appendChild(shape));
+    return g;
+  }
+  
+  // Vrátit expandované shapes
+  return expandedShapes;
+}
+```
+
+**Co to dělá:**
+1. ✅ Najde `<use href="#icon">` element
+2. ✅ Najde `<symbol id="icon">` nebo jiný referencovaný element
+3. ✅ **Zkompiluje obsah symbolu** (všechny path/circle/rect elementy)
+4. ✅ **Expanduje je inline** (žádný <use> ve výsledku!)
+5. ✅ Aplikuje transform z `<use>` (pokud existuje)
+6. ✅ Vrátí čisté path/shape elementy
+
+**Výsledek:**
+- ✅ **Žádné `<use>` elementy** ve výsledném SVG
+- ✅ **Žádné `xlink:href` atributy** = žádné namespace errory
+- ✅ **Plně expandované** path/circle/rect elementy
+- ✅ **Validní SVG** bez závislostí na externích symbolech
+- ✅ Funguje v **JAKÉMKOLIV** SVG vieweru
+
+**Debug logy:**
+```
+[svag] Compiler: Našel jsem <use> element, expanduji...
+[svag] Compiler: Expanduji <use> → #dist__calendar___2T2Oy
+[svag] SVG Compiler: Zkompilováno N elementů
+```
+
+**Změny v kódu:**
+- `compileSvgShapes()` - přidán 'use' do querySelectorAll
+- `compileSvgShapes()` - handling pole návratové hodnoty z compileShape
+- `compileShape()` - nový blok pro `<use>` elementy (řádky 169-228)
+- `compileShape()` - přidán 'use' do children querySelectorAll v `<g>` (řádek 293)
+
+---
+
+### 🚀 v1.1.7 - SVG PATH COMPILER (zastaralé - mělo bug s <use>)
 
 **PRŮLOMOVÉ ŘEŠENÍ:** Místo kopírování innerHTML a aplikace computed styles, nyní **kompilujeme čistý SVG přímo z elementů a jejich atributů**.
 

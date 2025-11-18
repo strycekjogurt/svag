@@ -135,12 +135,12 @@ function findInShadowRootRecursive(shadowRoot, elementId) {
   return null;
 }
 
-// SVG Compiler - kompiluje čistý SVG z shape elementů (NOVÉ v1.1.7)
+// SVG Compiler - kompiluje čistý SVG z shape elementů (NOVÉ v1.1.7, opraveno v1.1.8)
 function compileSvgShapes(sourceElement) {
   const compiledShapes = [];
   
-  // Najít všechny shape elementy a groups
-  const shapes = sourceElement.querySelectorAll('path, circle, rect, ellipse, line, polygon, polyline, g');
+  // Najít všechny shape elementy, groups A <use> elementy
+  const shapes = sourceElement.querySelectorAll('path, circle, rect, ellipse, line, polygon, polyline, g, use');
   
   shapes.forEach(shape => {
     // Kompilovat pouze top-level elementy (ne children <g>)
@@ -149,7 +149,12 @@ function compileSvgShapes(sourceElement) {
     if (!parentG || !sourceElement.contains(parentG) || parentG === sourceElement) {
       const compiled = compileShape(shape);
       if (compiled) {
-        compiledShapes.push(compiled);
+        // compileShape může vrátit pole (když expanduje <use>)
+        if (Array.isArray(compiled)) {
+          compiledShapes.push(...compiled);
+        } else {
+          compiledShapes.push(compiled);
+        }
       }
     }
   });
@@ -157,9 +162,70 @@ function compileSvgShapes(sourceElement) {
   return compiledShapes;
 }
 
-// Kompiluje jednotlivý shape element
+// Kompiluje jednotlivý shape element (opraveno v1.1.8 - podpora <use>)
 function compileShape(sourceShape) {
   const tagName = sourceShape.tagName.toLowerCase();
+  
+  // NOVÉ v1.1.8: Speciální handling pro <use> elementy
+  // Místo kopírování <use>, EXPANDUJEME ho na konkrétní obsah
+  if (tagName === 'use') {
+    console.log('[svag] Compiler: Našel jsem <use> element, expanduji...');
+    
+    const href = sourceShape.getAttribute('href') || sourceShape.getAttribute('xlink:href');
+    if (href && href.startsWith('#')) {
+      const symbolId = href.substring(1);
+      
+      // Najít referencovaný element
+      let referencedElement = document.getElementById(symbolId);
+      
+      if (!referencedElement) {
+        // Zkusit v shadow DOM
+        referencedElement = findElementInShadowDOM(symbolId);
+      }
+      
+      if (!referencedElement) {
+        // Zkusit v <defs>
+        const allDefs = document.querySelectorAll('defs, svg');
+        for (const def of allDefs) {
+          try {
+            const found = def.querySelector(`#${CSS.escape(symbolId)}`);
+            if (found) {
+              referencedElement = found;
+              break;
+            }
+          } catch (error) {
+            console.debug('[svag] Compiler: Error with CSS.escape:', error);
+          }
+        }
+      }
+      
+      if (referencedElement) {
+        console.log(`[svag] Compiler: Expanduji <use> → #${symbolId}`);
+        
+        // Zkompilovat obsah referencovaného elementu
+        const expandedShapes = compileSvgShapes(referencedElement);
+        
+        // Aplikovat transform z <use> na expandované shapes (pokud existuje)
+        const useTransform = sourceShape.getAttribute('transform');
+        if (useTransform && expandedShapes.length > 0) {
+          // Zabalit do <g> s transform
+          const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+          g.setAttribute('transform', useTransform);
+          expandedShapes.forEach(shape => g.appendChild(shape));
+          return g;
+        }
+        
+        // Vrátit expandované shapes (může být pole!)
+        return expandedShapes.length === 1 ? expandedShapes[0] : expandedShapes;
+      } else {
+        console.warn(`[svag] Compiler: Symbol #${symbolId} nenalezen, přeskakuji <use>`);
+        return null;
+      }
+    }
+    
+    // <use> bez href - přeskočit
+    return null;
+  }
   
   // Vytvořit nový element stejného typu
   const compiled = document.createElementNS('http://www.w3.org/2000/svg', tagName);
@@ -224,11 +290,16 @@ function compileShape(sourceShape) {
   
   // 4. Pokud je to <g> (group), zkompilovat children rekurzivně
   if (tagName === 'g') {
-    const children = sourceShape.querySelectorAll(':scope > path, :scope > circle, :scope > rect, :scope > ellipse, :scope > line, :scope > polygon, :scope > polyline, :scope > g');
+    const children = sourceShape.querySelectorAll(':scope > path, :scope > circle, :scope > rect, :scope > ellipse, :scope > line, :scope > polygon, :scope > polyline, :scope > g, :scope > use');
     children.forEach(child => {
       const compiledChild = compileShape(child);
       if (compiledChild) {
-        compiled.appendChild(compiledChild);
+        // compiledChild může být pole (expandovaný <use>)
+        if (Array.isArray(compiledChild)) {
+          compiledChild.forEach(c => compiled.appendChild(c));
+        } else {
+          compiled.appendChild(compiledChild);
+        }
       }
     });
   }
@@ -1831,15 +1902,14 @@ svgMutationObserver.observe(document.body, {
   subtree: true
 });
 
-console.log('svag extension loaded - enhanced SVG detection v1.1.7');
+console.log('svag extension loaded - enhanced SVG detection v1.1.8');
 console.log('Supported SVG types: inline, img, data-uri, object, embed, background, sprite, mask, clip-path, pseudo-elements, picture, iframe, css-cursor, css-list-style, css-border-image, css-filter, css-shape-outside, foreign-object, shadow-dom, use-resolved');
 console.log('MutationObserver: active - tracking dynamic SVG additions');
-console.log('🚀 SVG PATH COMPILER v1.1.7:');
-console.log('  ✅ Kompiluje ČISTÝ SVG přímo z shape elementů (path, circle, rect, atd.)');
-console.log('  ✅ Kopíruje atributy PŘÍMO z elementů (d, fill, stroke, atd.)');
-console.log('  ✅ Žádné CSS třídy - nikdy se nekopírují');
-console.log('  ✅ Fallback na computed styles pouze pokud atribut chybí');
-console.log('  ✅ Rekurzivní kompilace <g> groups');
-console.log('  ✅ Oprava dvojitého ## v atributech');
-console.log('  🎯 Výsledek: Čistý, validní, samostatný SVG bez závislostí!');
+console.log('🚀 SVG PATH COMPILER v1.1.8 - KRITICKÁ OPRAVA:');
+console.log('  ✅ EXPANDUJE <use> elementy inline - žádné xlink:href!');
+console.log('  ✅ Rekurzivní resolving všech <use> referencí');
+console.log('  ✅ Kompiluje ČISTÝ SVG přímo z shape elementů');
+console.log('  ✅ Žádné CSS třídy, žádné <use>, žádné namespace errory');
+console.log('  ✅ Podpora transform na <use> elementech');
+console.log('  🎯 Výsledek: 100% expandovaný, čistý, validní SVG!');
 
