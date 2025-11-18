@@ -17,11 +17,11 @@ config.js
 manifest.json
 svag-chrome-extension/
 
-# Extension icons (but keep chrome-icon.png for landing page)
-icons/icon16.png
-icons/icon48.png
-icons/icon128.png
-icons/README.md
+# Icons are now needed for favicon - DO NOT IGNORE
+# icons/icon16.png
+# icons/icon48.png
+# icons/icon128.png
+# icons/README.md
 
 # Documentation
 README.md
