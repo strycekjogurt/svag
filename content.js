@@ -213,8 +213,8 @@ function scanShadowRoots(element) {
   return svgs;
 }
 
-// Helper funkce pro nalezení SVG v elementu nebo jeho potomcích
-function findSvgInElement(element) {
+// Helper funkce pro nalezení SVG v elementu nebo jeho potomcích (vylepšená v1.1.1)
+function findSvgInElement(element, mouseX, mouseY) {
   if (!element) return null;
   
   // Případ 1: Element je už SVG nebo obsahuje SVG atributy
@@ -245,7 +245,55 @@ function findSvgInElement(element) {
     return imgSvg;
   }
   
-  // Případ 5: Hledat jakýkoliv element s SVG vlastnostmi v children (max 5 úrovní)
+  // NOVÉ: Případ 5: Použít elementFromPoint pro přesnější detekci
+  // (ignoruje pointer-events: none a najde překryté elementy)
+  if (mouseX !== undefined && mouseY !== undefined) {
+    try {
+      // Dočasně skrýt current element pro detekci pod ním
+      const originalPointerEvents = element.style.pointerEvents;
+      element.style.pointerEvents = 'none';
+      
+      // Získat element pod kurzorem
+      const elementBelow = document.elementFromPoint(mouseX, mouseY);
+      
+      // Obnovit pointer-events
+      element.style.pointerEvents = originalPointerEvents;
+      
+      if (elementBelow && elementBelow !== element) {
+        // Zkontrolovat jestli element pod je SVG
+        if (elementBelow.tagName && elementBelow.tagName.toLowerCase() === 'svg') {
+          console.log('[svag] Found SVG using elementFromPoint');
+          return elementBelow;
+        }
+        // Nebo má SVG jako parent
+        const svgParent = elementBelow.closest('svg');
+        if (svgParent) {
+          console.log('[svag] Found SVG parent using elementFromPoint');
+          return svgParent;
+        }
+      }
+    } catch (error) {
+      console.debug('[svag] Error using elementFromPoint:', error);
+    }
+  }
+  
+  // Případ 6: Hledat SVG v siblings (sourozence)
+  try {
+    const parent = element.parentElement;
+    if (parent) {
+      const siblings = parent.children;
+      for (let i = 0; i < siblings.length; i++) {
+        const sibling = siblings[i];
+        if (sibling !== element && sibling.tagName && sibling.tagName.toLowerCase() === 'svg') {
+          return sibling;
+        }
+      }
+    }
+  } catch (error) {
+    console.debug('[svag] Error searching siblings:', error);
+  }
+  
+  // Případ 7: Hledat jakýkoliv element s SVG vlastnostmi v children
   try {
     const allChildren = element.querySelectorAll('*');
     // Omezit na prvních 50 elementů pro performance
@@ -1451,8 +1499,8 @@ document.addEventListener('mouseover', (e) => {
     return;
   }
   
-  // Najít SVG element - může být parent, sám element, nebo child (např. v buttonu)
-  const svgElement = findSvgInElement(element);
+  // Najít SVG element - předat souřadnice myši pro elementFromPoint
+  const svgElement = findSvgInElement(element, e.clientX, e.clientY);
   
   if (svgElement) {
     const svgData = getSvgData(svgElement);
@@ -1497,8 +1545,8 @@ document.addEventListener('click', (e) => {
     return;
   }
   
-  // Najít SVG element pomocí vylepšené funkce
-  const svgElement = findSvgInElement(e.target);
+  // Najít SVG element s mouse souřadnicemi
+  const svgElement = findSvgInElement(e.target, e.clientX, e.clientY);
   
   if (!svgElement) return;
   
@@ -1555,8 +1603,8 @@ svgMutationObserver.observe(document.body, {
   subtree: true
 });
 
-console.log('svag extension loaded - enhanced SVG detection v1.1');
+console.log('svag extension loaded - enhanced SVG detection v1.1.1');
 console.log('Supported SVG types: inline, img, data-uri, object, embed, background, sprite, mask, clip-path, pseudo-elements, picture, iframe, css-cursor, css-list-style, css-border-image, css-filter, css-shape-outside, foreign-object, shadow-dom, use-resolved');
 console.log('MutationObserver: active - tracking dynamic SVG additions');
-console.log('Enhanced detection: SVG in buttons and nested elements');
+console.log('Enhanced detection: SVG in buttons, nested elements, pointer-events:none, and pseudo-elements');
 
