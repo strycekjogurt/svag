@@ -1,60 +1,14 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "server.js",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": [
-          "icons/**",
-          "pages/**",
-          "Gallery/**",
-          "iframe/**",
-          "views/**",
-          "emails/**",
-          "robots.txt",
-          "sitemap.xml",
-          "favicon.ico"
-        ]
-      }
-    },
-    {
-      "src": "icons/**",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "pages/**",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "Gallery/**",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "iframe/**",
-      "use": "@vercel/static"
+  "functions": {
+    "server.js": {
+      "includeFiles": "**"
     }
-  ],
-  "routes": [
+  },
+  "rewrites": [
     {
-      "src": "/icons/(.*)",
-      "dest": "/icons/$1"
-    },
-    {
-      "src": "/pages/(.*)",
-      "dest": "/pages/$1"
-    },
-    {
-      "src": "/Gallery/(.*)",
-      "dest": "/Gallery/$1"
-    },
-    {
-      "src": "/iframe/(.*)",
-      "dest": "/iframe/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "server.js"
+      "source": "/(.*)",
+      "destination": "/server.js"
     }
   ]
 }
