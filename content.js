@@ -28,25 +28,32 @@ async function getValidToken() {
     if (expiresAt - now < 5 * 60 * 1000) {
       console.log('🔄 Token expiring soon, refreshing...');
       
+      // OPRAVENO: Refresh přes background script kvůli CORS
       const apiUrl = result.apiUrl || 'https://svag.pro';
-      const response = await fetch(`${apiUrl}/api/auth/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken: result.refreshToken })
-      });
       
-      if (response.ok) {
-        const data = await response.json();
-        await chrome.storage.sync.set({
-          apiToken: data.token,
-          refreshToken: data.refreshToken
+      return new Promise((resolve) => {
+        chrome.runtime.sendMessage({
+          action: 'refreshToken',
+          apiUrl: `${apiUrl}/api/auth/refresh`,
+          refreshToken: result.refreshToken
+        }, async (response) => {
+          if (chrome.runtime.lastError) {
+            console.error('❌ Runtime error refreshing token:', chrome.runtime.lastError);
+            resolve(null);
+          } else if (response && response.success) {
+            // Uložit nový token
+            await chrome.storage.sync.set({
+              apiToken: response.token,
+              refreshToken: response.refreshToken
+            });
+            console.log('✅ Token refreshed');
+            resolve(response.token);
+          } else {
+            console.error('❌ Failed to refresh token:', response);
+            resolve(null);
+          }
         });
-        console.log('✅ Token refreshed');
-        return data.token;
-      } else {
-        console.error('❌ Failed to refresh token');
-        return null;
-      }
+      });
     }
     
     return result.apiToken;

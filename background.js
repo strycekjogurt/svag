@@ -39,6 +39,34 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     });
   }
   
+  // Handler pro token refresh - musí jít přes background kvůli CORS
+  if (request.action === 'refreshToken') {
+    (async () => {
+      try {
+        console.log('[background] refreshToken: Refreshing token...');
+        
+        const response = await fetch(request.apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken: request.refreshToken })
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('[background] refreshToken: Token refreshed successfully');
+          sendResponse({ success: true, token: data.token, refreshToken: data.refreshToken });
+        } else {
+          console.error('[background] refreshToken: Failed to refresh token:', response.status);
+          sendResponse({ success: false, status: response.status });
+        }
+      } catch (error) {
+        console.error('[background] refreshToken: Fetch error:', error);
+        sendResponse({ success: false, error: error.message });
+      }
+    })();
+    return true; // Async response
+  }
+  
   // Handler pro save to gallery - musí jít přes background kvůli CORS
   if (request.action === 'saveToGallery') {
     (async () => {
