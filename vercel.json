@@ -17,9 +17,41 @@
           "favicon.ico"
         ]
       }
+    },
+    {
+      "src": "icons/**",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "pages/**",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "Gallery/**",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "iframe/**",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
+    {
+      "src": "/icons/(.*)",
+      "dest": "/icons/$1"
+    },
+    {
+      "src": "/pages/(.*)",
+      "dest": "/pages/$1"
+    },
+    {
+      "src": "/Gallery/(.*)",
+      "dest": "/Gallery/$1"
+    },
+    {
+      "src": "/iframe/(.*)",
+      "dest": "/iframe/$1"
+    },
     {
       "src": "/(.*)",
       "dest": "server.js"
