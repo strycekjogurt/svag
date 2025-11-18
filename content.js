@@ -143,12 +143,14 @@ function findInShadowRootRecursive(shadowRoot, elementId) {
  * @param {Element} sourceElement - Element obsahující SVG shapes
  * @returns {Array<Element>} Pole čistých SVG elementů
  */
-function extractShapes(sourceElement) {
+function extractShapes(sourceElement, inheritedFill = null, inheritedStroke = null) {
   const shapes = [];
   const shapeTypes = ['path', 'circle', 'rect', 'ellipse', 'line', 'polygon', 'polyline', 'g'];
   
-  // Najdi všechny shape elementy
-  const elements = sourceElement.querySelectorAll(shapeTypes.join(', '));
+  // OPRAVA 1: Použít :scope selector pro vyhnutí se duplicitám
+  // Najdi pouze PŘÍMÉ children, ne všechny nested
+  const selector = shapeTypes.map(t => `:scope > ${t}`).join(', ');
+  const elements = sourceElement.querySelectorAll(selector);
   
   elements.forEach(el => {
     const tagName = el.tagName.toLowerCase();
@@ -178,7 +180,7 @@ function extractShapes(sourceElement) {
       newEl.setAttribute('transform', el.getAttribute('transform'));
     }
     
-    // Zkopírovat stroke atributy pokud existují
+    // Zkopírovat stroke atributy pokud existují JAKO ATRIBUTY
     const strokeAttrs = ['stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin', 
                          'stroke-dasharray', 'stroke-dashoffset', 'stroke-miterlimit'];
     strokeAttrs.forEach(attr => {
@@ -187,29 +189,59 @@ function extractShapes(sourceElement) {
       }
     });
     
-    // Aplikovat computed fill - VŽDY
+    // OPRAVA 2 & 3: Inteligentní fill/stroke detection
     try {
       const computed = window.getComputedStyle(el);
       const fill = computed.fill;
+      const stroke = computed.stroke;
+      const strokeWidth = computed.strokeWidth;
       
+      // Aplikovat computed fill pokud není 'none'
       if (fill && fill !== 'none') {
         // Vyčistit fill hodnotu (odstranit duplicitní #)
         const cleanFill = fill.replace(/^#+/, '#');
         newEl.setAttribute('fill', cleanFill);
         console.debug(`[svag v1.2.0] extractShapes: Aplikován computed fill: ${cleanFill}`);
-      } else {
-        // Fallback na currentColor
+      } else if (inheritedFill && inheritedFill !== 'none') {
+        // OPRAVA 4: Použít inherited fill z parent <use>
+        newEl.setAttribute('fill', inheritedFill);
+        console.debug(`[svag v1.2.0] extractShapes: Aplikován inherited fill: ${inheritedFill}`);
+      } else if (!stroke || stroke === 'none') {
+        // OPRAVA 4: Fallback na currentColor POUZE pokud nemá stroke
         newEl.setAttribute('fill', 'currentColor');
-        console.debug('[svag v1.2.0] extractShapes: Aplikován fallback fill: currentColor');
+        console.debug('[svag v1.2.0] extractShapes: Fallback fill: currentColor');
+      }
+      
+      // OPRAVA 3: Aplikovat computed stroke pokud není v atributech
+      if (!newEl.hasAttribute('stroke')) {
+        if (stroke && stroke !== 'none') {
+          const cleanStroke = stroke.replace(/^#+/, '#');
+          newEl.setAttribute('stroke', cleanStroke);
+          console.debug(`[svag v1.2.0] extractShapes: Aplikován computed stroke: ${cleanStroke}`);
+        } else if (inheritedStroke && inheritedStroke !== 'none') {
+          // OPRAVA 4: Použít inherited stroke z parent <use>
+          newEl.setAttribute('stroke', inheritedStroke);
+          console.debug(`[svag v1.2.0] extractShapes: Aplikován inherited stroke: ${inheritedStroke}`);
+        }
+      }
+      
+      // Aplikovat computed stroke-width pokud není v atributech
+      if (!newEl.hasAttribute('stroke-width') && strokeWidth && strokeWidth !== '0px' && (newEl.hasAttribute('stroke') || stroke !== 'none')) {
+        newEl.setAttribute('stroke-width', strokeWidth);
+        console.debug(`[svag v1.2.0] extractShapes: Aplikován computed stroke-width: ${strokeWidth}`);
       }
     } catch (error) {
       console.debug('[svag v1.2.0] extractShapes: Chyba při získávání computed style:', error);
-      newEl.setAttribute('fill', 'currentColor');
+      // Fallback pouze pokud nemáme inherited values
+      if (!inheritedFill && !inheritedStroke) {
+        newEl.setAttribute('fill', 'currentColor');
+      }
     }
     
     // Pokud je to group, zpracovat children rekurzivně
+    // Předat inherited values dál
     if (tagName === 'g') {
-      const childShapes = extractShapes(el);
+      const childShapes = extractShapes(el, inheritedFill, inheritedStroke);
       childShapes.forEach(child => newEl.appendChild(child));
     }
     
@@ -217,7 +249,8 @@ function extractShapes(sourceElement) {
   });
   
   // Handle <use> elements - expandovat je inline
-  const useElements = sourceElement.querySelectorAll('use');
+  // OPRAVA 1: Použít :scope pro vyhnutí se vnořeným <use>
+  const useElements = sourceElement.querySelectorAll(':scope > use');
   useElements.forEach(useEl => {
     const href = useEl.getAttribute('href') || useEl.getAttribute('xlink:href');
     if (href && href.startsWith('#')) {
@@ -250,19 +283,34 @@ function extractShapes(sourceElement) {
       if (symbol) {
         console.log(`[svag v1.2.0] extractShapes: Expanduji <use> → #${symbolId}`);
         
-        // Rekurzivně extrahovat shapes ze symbolu
-        const expandedShapes = extractShapes(symbol);
-        
-        // Aplikovat transform z <use> pokud existuje
-        const useTransform = useEl.getAttribute('transform');
-        if (useTransform && expandedShapes.length > 0) {
-          // Zabalit do <g> s transform
-          const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-          g.setAttribute('transform', useTransform);
-          expandedShapes.forEach(shape => g.appendChild(shape));
-          shapes.push(g);
-        } else {
-          shapes.push(...expandedShapes);
+        // OPRAVA 4: Získat fill/stroke z <use> elementu pro dědičnost
+        try {
+          const useComputed = window.getComputedStyle(useEl);
+          const useFill = useComputed.fill;
+          const useStroke = useComputed.stroke;
+          
+          // Předat fill/stroke jako inherited values do rekurze
+          const expandedShapes = extractShapes(
+            symbol,
+            useFill && useFill !== 'none' ? useFill : inheritedFill,
+            useStroke && useStroke !== 'none' ? useStroke : inheritedStroke
+          );
+          
+          console.debug(`[svag v1.2.0] extractShapes: Inherited fill: ${useFill}, stroke: ${useStroke}`);
+          
+          // Aplikovat transform z <use> pokud existuje
+          const useTransform = useEl.getAttribute('transform');
+          if (useTransform && expandedShapes.length > 0) {
+            // Zabalit do <g> s transform
+            const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            g.setAttribute('transform', useTransform);
+            expandedShapes.forEach(shape => g.appendChild(shape));
+            shapes.push(g);
+          } else {
+            shapes.push(...expandedShapes);
+          }
+        } catch (error) {
+          console.error('[svag v1.2.0] extractShapes: Chyba při zpracování <use>:', error);
         }
       } else {
         console.warn(`[svag v1.2.0] extractShapes: Symbol #${symbolId} nenalezen`);
@@ -1567,11 +1615,20 @@ async function downloadSvg(cleanData, element) {
 // NOVÉ v1.2.0: Zjednodušené odeslání do galerie (vždy máme čistý content z extractCleanSvg)
 async function sendToGallery(cleanData, element) {
   console.log('[svag v1.2.0] sendToGallery: Začínám odesílání...');
+  console.log('[svag v1.2.0] sendToGallery: cleanData:', cleanData);
+  
+  if (!cleanData || typeof cleanData !== 'object') {
+    console.error('[svag v1.2.0] sendToGallery: Neplatný cleanData:', cleanData);
+    showNotification('extraction error', popupPosition);
+    hideActionPopup();
+    return;
+  }
   
   const content = cleanData.content;
   const iconName = cleanData.name;
   
   if (!content) {
+    console.error('[svag v1.2.0] sendToGallery: Chybí content v cleanData');
     showNotification('no content', popupPosition);
     hideActionPopup();
     return;
