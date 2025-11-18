@@ -809,31 +809,24 @@ async function loadRecentIcons(token) {
     // Clear icons list and show loading state
     iconsList.innerHTML = '<div class="loading-state">Loading...</div>';
     
-    // Načíst ikony přes background script (kvůli CORS)
-    const iconsResponse = await new Promise((resolve) => {
-      chrome.runtime.sendMessage({
-        action: 'fetchGalleryIcons',
-        apiUrl: `${apiUrl}/api/gallery`,
-        token: token
-      }, resolve);
-    });
-    
-    const statsResponse = await new Promise((resolve) => {
-      chrome.runtime.sendMessage({
-        action: 'fetchGalleryStats',
-        apiUrl: `${apiUrl}/api/gallery/stats`,
-        token: token
-      }, resolve);
-    });
+    // Načíst ikony přímo z API (jako před synchronizací)
+    const [iconsResponse, statsResponse] = await Promise.all([
+      fetch(`${apiUrl}/api/gallery`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      }),
+      fetch(`${apiUrl}/api/gallery/stats`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+    ]);
     
     console.log('📥 API responses:', {
-      icons: iconsResponse?.status || 'error',
-      stats: statsResponse?.status || 'error'
+      icons: iconsResponse.status,
+      stats: statsResponse.status
     });
     
-    if (iconsResponse?.success && statsResponse?.success) {
-      const icons = iconsResponse.data;
-      const stats = statsResponse.data;
+    if (iconsResponse.ok && statsResponse.ok) {
+      const icons = await iconsResponse.json();
+      const stats = await statsResponse.json();
       const totalIcons = icons.length;
       
       console.log(`✅ Loaded ${totalIcons} icons from API`);
@@ -900,10 +893,8 @@ async function loadRecentIcons(token) {
     } else {
       // API error - zobrazit error stav
       console.error('❌ Failed to load icons:', {
-        iconsStatus: iconsResponse?.status || 'no response',
-        statsStatus: statsResponse?.status || 'no response',
-        iconsError: iconsResponse?.error,
-        statsError: statsResponse?.error
+        iconsStatus: iconsResponse.status,
+        statsStatus: statsResponse.status
       });
       
       iconsList.innerHTML = '';
@@ -914,12 +905,12 @@ async function loadRecentIcons(token) {
           <div style="font-size: 24px; margin-bottom: 8px;">⚠️</div>
           <div>Failed to load icons</div>
           <div style="font-size: 11px; margin-top: 4px; color: #666;">
-            ${iconsResponse?.status === 401 || statsResponse?.status === 401 ? 'Please re-login' : 'Try again later'}
+            ${iconsResponse.status === 401 ? 'Please re-login' : 'Try again later'}
           </div>
         </div>
       `;
       errorState.addEventListener('click', () => {
-        if (iconsResponse?.status === 401 || statsResponse?.status === 401) {
+        if (iconsResponse.status === 401) {
           showLoginForm();
         } else {
           chrome.tabs.create({ url: `${apiUrl}/gallery` });
