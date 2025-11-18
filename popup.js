@@ -802,152 +802,214 @@ function recolorToBlack(svg) {
 
 async function loadRecentIcons(token) {
   try {
-    console.log('🔄 Loading recent icons from API...');
+    console.log('🔄 Loading recent icons...');
     console.log('🔑 Token length:', token?.length);
-    console.log('🔑 Token preview:', token?.substring(0, 30) + '...');
     
     // Clear icons list and show loading state
     iconsList.innerHTML = '<div class="loading-state">Loading...</div>';
     
-    // Debug request details
-    console.log('📍 API URL:', apiUrl);
-    console.log('📤 Sending request with Authorization header');
+    // Try API first (quick)
+    console.log('📍 Trying API:', apiUrl);
     
-    // Načíst ikony přímo z API (jako před synchronizací)
-    const [iconsResponse, statsResponse] = await Promise.all([
-      fetch(`${apiUrl}/api/gallery`, {
-        method: 'GET',
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include'
-      }),
-      fetch(`${apiUrl}/api/gallery/stats`, {
-        method: 'GET',
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include'
-      })
-    ]);
-    
-    console.log('📥 API responses:', {
-      icons: iconsResponse.status,
-      stats: statsResponse.status
-    });
-    
-    if (iconsResponse.ok && statsResponse.ok) {
-      const icons = await iconsResponse.json();
-      const stats = await statsResponse.json();
-      const totalIcons = icons.length;
+    try {
+      const [iconsResponse, statsResponse] = await Promise.all([
+        fetch(`${apiUrl}/api/gallery`, {
+          method: 'GET',
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        }),
+        fetch(`${apiUrl}/api/gallery/stats`, {
+          method: 'GET',
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        })
+      ]);
       
-      console.log(`✅ Loaded ${totalIcons} icons from API`);
+      console.log('📥 API responses:', {
+        icons: iconsResponse.status,
+        stats: statsResponse.status
+      });
       
-      // Update gallery limit s dynamickým limitem z API
-      limitText.textContent = `${stats.current || totalIcons}/${stats.limit || 100}`;
-      
-      // Clear icons list
-      iconsList.innerHTML = '';
-      
-      if (totalIcons === 0) {
-        // Žádné ikony - zobrazit prázdný stav
-        const emptyState = document.createElement('div');
-        emptyState.className = 'empty-state';
-        emptyState.innerHTML = `
-          <div style="text-align: center; padding: 20px; color: #666; font-size: 13px;">
-            <div style="font-size: 24px; margin-bottom: 8px;">📦</div>
-            <div>No icons yet</div>
-            <div style="font-size: 11px; margin-top: 4px;">Save SVGs to your gallery</div>
-          </div>
-        `;
-        iconsList.appendChild(emptyState);
-        return;
-      }
-      
-      // Display last 3 icons (newest first)
-      const displayIcons = icons.slice(-3).reverse();
-      console.log('🖼️  Displaying icons:', displayIcons.map(i => i.name || 'unnamed'));
-      
-      displayIcons.forEach(icon => {
-        const iconItem = document.createElement('div');
-        iconItem.className = 'icon-item';
+      if (iconsResponse.ok && statsResponse.ok) {
+        console.log('✅ API call successful, loading from API');
+        const icons = await iconsResponse.json();
+        const stats = await statsResponse.json();
         
-        // Detekovat jednobarevné SVG a přebarvit na černou
-        let svg = icon.svg;
-        if (isSingleColor(svg)) {
-          svg = recolorToBlack(svg);
-        }
+        console.log(`✅ Loaded ${icons.length} icons from API`);
         
-        iconItem.innerHTML = svg;
-        iconItem.addEventListener('click', () => {
-          chrome.tabs.create({ url: `${apiUrl}/gallery` });
-        });
-        iconsList.appendChild(iconItem);
-      });
-      
-      // Add empty slots
-      for (let i = displayIcons.length; i < 3; i++) {
-        const iconItem = document.createElement('div');
-        iconItem.className = 'icon-item empty';
-        iconsList.appendChild(iconItem);
+        // Zobrazit ikony pomocí helper funkce
+        displayIconsInPopup(icons, stats);
+        return; // Success - exit funkce
+      } else {
+        // API vrátilo error - fallback na localStorage
+        console.warn('⚠️  API failed, falling back to localStorage method');
+        throw new Error('API returned ' + iconsResponse.status);
       }
+    } catch (apiError) {
+      // API selhalo - zkusit localStorage fallback
+      console.log('🔄 API failed, trying localStorage fallback...');
+      console.log('📦 Opening gallery page to read localStorage...');
       
-      // Add "+X" indicator if more than 3 icons
-      if (totalIcons > 3) {
-        const moreItem = document.createElement('div');
-        moreItem.className = 'icon-item more';
-        moreItem.textContent = `+${totalIcons - 3}`;
-        moreItem.addEventListener('click', () => {
-          chrome.tabs.create({ url: `${apiUrl}/gallery` });
-        });
-        iconsList.appendChild(moreItem);
-      }
-    } else {
-      // API error - zobrazit error stav
-      console.error('❌ Failed to load icons:', {
-        iconsStatus: iconsResponse.status,
-        statsStatus: statsResponse.status
+      // Otevřít gallery page v hidden iframe
+      return new Promise((resolve) => {
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = `${apiUrl}/gallery`;
+        
+        const timeout = setTimeout(() => {
+          document.body.removeChild(iframe);
+          console.error('❌ localStorage fallback timeout');
+          showIconsError('Connection timeout');
+          resolve();
+        }, 10000); // 10s timeout
+        
+        iframe.onload = async () => {
+          try {
+            clearTimeout(timeout);
+            
+            // Pokusit se číst localStorage z iframe
+            const galleryToken = iframe.contentWindow.localStorage.getItem('token');
+            
+            if (!galleryToken) {
+              console.warn('⚠️  No token in gallery localStorage');
+              throw new Error('No gallery token');
+            }
+            
+            console.log('✅ Gallery token found, fetching data...');
+            
+            // Fetch s gallery tokenem
+            const [iconsResp, statsResp] = await Promise.all([
+              fetch(`${apiUrl}/api/gallery`, {
+                headers: { 'Authorization': `Bearer ${galleryToken}` }
+              }),
+              fetch(`${apiUrl}/api/gallery/stats`, {
+                headers: { 'Authorization': `Bearer ${galleryToken}` }
+              })
+            ]);
+            
+            if (iconsResp.ok && statsResp.ok) {
+              const icons = await iconsResp.json();
+              const stats = await statsResp.json();
+              
+              console.log(`✅ Loaded ${icons.length} icons via localStorage fallback`);
+              
+              // Zobrazit ikony (stejný kód jako výše)
+              displayIconsInPopup(icons, stats);
+            } else {
+              throw new Error('Gallery API also failed');
+            }
+            
+          } catch (error) {
+            console.error('❌ localStorage fallback failed:', error);
+            showIconsError('Failed to load icons');
+          } finally {
+            document.body.removeChild(iframe);
+            resolve();
+          }
+        };
+        
+        iframe.onerror = () => {
+          clearTimeout(timeout);
+          document.body.removeChild(iframe);
+          console.error('❌ Failed to load gallery iframe');
+          showIconsError('Connection error');
+          resolve();
+        };
+        
+        document.body.appendChild(iframe);
       });
-      
-      iconsList.innerHTML = '';
-      const errorState = document.createElement('div');
-      errorState.className = 'error-state';
-      errorState.innerHTML = `
-        <div style="text-align: center; padding: 20px; color: #d32f2f; font-size: 13px;">
-          <div style="font-size: 24px; margin-bottom: 8px;">⚠️</div>
-          <div>Failed to load icons</div>
-          <div style="font-size: 11px; margin-top: 4px; color: #666;">
-            ${iconsResponse.status === 401 ? 'Please re-login' : 'Try again later'}
-          </div>
-        </div>
-      `;
-      errorState.addEventListener('click', () => {
-        if (iconsResponse.status === 401) {
-          showLoginForm();
-        } else {
-          chrome.tabs.create({ url: `${apiUrl}/gallery` });
-        }
-      });
-      iconsList.appendChild(errorState);
     }
+    
   } catch (error) {
     console.error('❌ Error loading icons:', error);
-    
-    // Network error - zobrazit error stav
-    iconsList.innerHTML = '';
-    const errorState = document.createElement('div');
-    errorState.className = 'error-state';
-    errorState.innerHTML = `
-      <div style="text-align: center; padding: 20px; color: #d32f2f; font-size: 13px;">
-        <div style="font-size: 24px; margin-bottom: 8px;">🔌</div>
-        <div>Connection error</div>
-        <div style="font-size: 11px; margin-top: 4px; color: #666;">Check your internet</div>
+    showIconsError('Connection error');
+  }
+}
+
+// Helper funkce pro zobrazení ikon (DRY)
+function displayIconsInPopup(icons, stats) {
+  const totalIcons = icons.length;
+  
+  // Update gallery limit
+  limitText.textContent = `${stats.current || totalIcons}/${stats.limit || 100}`;
+  
+  // Clear icons list
+  iconsList.innerHTML = '';
+  
+  if (totalIcons === 0) {
+    const emptyState = document.createElement('div');
+    emptyState.className = 'empty-state';
+    emptyState.innerHTML = `
+      <div style="text-align: center; padding: 20px; color: #666; font-size: 13px;">
+        <div style="font-size: 24px; margin-bottom: 8px;">📦</div>
+        <div>No icons yet</div>
+        <div style="font-size: 11px; margin-top: 4px;">Save SVGs to your gallery</div>
       </div>
     `;
-    iconsList.appendChild(errorState);
+    iconsList.appendChild(emptyState);
+    return;
   }
+  
+  // Display last 3 icons (newest first)
+  const displayIcons = icons.slice(-3).reverse();
+  
+  displayIcons.forEach(icon => {
+    const iconItem = document.createElement('div');
+    iconItem.className = 'icon-item';
+    
+    let svg = icon.svg;
+    if (isSingleColor(svg)) {
+      svg = recolorToBlack(svg);
+    }
+    
+    iconItem.innerHTML = svg;
+    iconItem.addEventListener('click', () => {
+      chrome.tabs.create({ url: `${apiUrl}/gallery` });
+    });
+    iconsList.appendChild(iconItem);
+  });
+  
+  // Add empty slots
+  for (let i = displayIcons.length; i < 3; i++) {
+    const iconItem = document.createElement('div');
+    iconItem.className = 'icon-item empty';
+    iconsList.appendChild(iconItem);
+  }
+  
+  // Add "+X" indicator
+  if (totalIcons > 3) {
+    const moreItem = document.createElement('div');
+    moreItem.className = 'icon-item more';
+    moreItem.textContent = `+${totalIcons - 3}`;
+    moreItem.addEventListener('click', () => {
+      chrome.tabs.create({ url: `${apiUrl}/gallery` });
+    });
+    iconsList.appendChild(moreItem);
+  }
+}
+
+// Helper funkce pro zobrazení error (DRY)
+function showIconsError(message) {
+  iconsList.innerHTML = '';
+  const errorState = document.createElement('div');
+  errorState.className = 'error-state';
+  errorState.innerHTML = `
+    <div style="text-align: center; padding: 20px; color: #d32f2f; font-size: 13px;">
+      <div style="font-size: 24px; margin-bottom: 8px;">⚠️</div>
+      <div>${message}</div>
+      <div style="font-size: 11px; margin-top: 4px; color: #666;">Click to open gallery</div>
+    </div>
+  `;
+  errorState.addEventListener('click', () => {
+    chrome.tabs.create({ url: `${apiUrl}/gallery` });
+  });
+  iconsList.appendChild(errorState);
 }
 
 // Poslouchat na změny v chrome.storage (pro automatické přihlášení po aktivaci)
