@@ -58,7 +58,7 @@ window.svagDebug = {
     }
     
     const testSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" fill="#000"/></svg>`;
-    const apiUrl = `${result.apiUrl || 'https://svag.pro'}/api/gallery`;
+    const apiUrl = `${result.apiUrl || 'https://www.svag.pro'}/api/gallery`;
     
     console.log('🚀 Testuji API call...');
     console.log('   URL:', apiUrl);
@@ -1741,7 +1741,7 @@ async function sendToGallery(cleanData, element) {
   try {
     // Získat API URL
     const result = await chrome.storage.sync.get(['apiUrl']);
-    const apiUrl = `${result.apiUrl || 'https://svag.pro'}/api/gallery`;
+    const apiUrl = `${result.apiUrl || 'https://www.svag.pro'}/api/gallery`;
     
     console.log('[svag v1.2.0] sendToGallery: Odesílám do API...');
     

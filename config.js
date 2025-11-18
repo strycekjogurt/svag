@@ -3,13 +3,13 @@
 
 // API URL Configuration
 // Development: Use unpacked extension with local server
-// Production: https://svag.pro
+// Production: https://www.svag.pro
 const API_CONFIG = {
   // Default API URL - Production Vercel deployment
-  DEFAULT_API_URL: 'https://svag.pro',
+  DEFAULT_API_URL: 'https://www.svag.pro',
   
   // Development URL (for unpacked extension)
-  DEVELOPMENT_API_URL: 'https://svag.pro',
+  DEVELOPMENT_API_URL: 'https://www.svag.pro',
   
   // Auto-detect environment
   getApiUrl: function() {
