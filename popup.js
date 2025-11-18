@@ -30,70 +30,6 @@ let apiUrl = 'https://svag.pro';
 let currentScheme = 'white-black';
 let currentEmail = '';
 
-// Helper funkce pro validaci a refresh tokenu
-async function getValidToken(apiToken, refreshToken) {
-  if (!apiToken) {
-    console.log('❌ No token provided');
-    return null;
-  }
-  
-  try {
-    // Dekódovat JWT a zkontrolovat expiraci
-    const payload = JSON.parse(atob(apiToken.split('.')[1]));
-    const expiresAt = payload.exp * 1000;
-    const now = Date.now();
-    const timeUntilExpire = (expiresAt - now) / 1000 / 60; // minuty
-    
-    console.log(`🔑 Token expires in ${timeUntilExpire.toFixed(1)} minutes`);
-    
-    // Pokud token už vypršel, nelze ho použít
-    if (expiresAt <= now) {
-      console.error('❌ Token EXPIRED, cannot use');
-      return null;
-    }
-    
-    // Pokud token vyprší brzy a máme refreshToken, zkusit refresh
-    if (expiresAt - now < 5 * 60 * 1000 && refreshToken) {
-      console.log('🔄 Token expiring soon, attempting refresh...');
-      
-      try {
-        const response = await fetch(`${apiUrl}/api/auth/refresh`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refreshToken })
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          console.log('✅ Token refreshed successfully');
-          
-          // Uložit nový token
-          await chrome.storage.sync.set({
-            apiToken: data.token,
-            refreshToken: data.refreshToken
-          });
-          
-          return data.token;
-        } else {
-          console.warn('⚠️  Token refresh failed, using original token');
-          return apiToken;
-        }
-      } catch (error) {
-        console.error('❌ Refresh error:', error);
-        return apiToken; // Fallback na původní token
-      }
-    }
-    
-    // Token je validní a není třeba refresh
-    console.log('✅ Token is valid, no refresh needed');
-    return apiToken;
-    
-  } catch (error) {
-    console.error('❌ Error checking token:', error);
-    return null;
-  }
-}
-
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('🚀 Popup initialized');
@@ -112,39 +48,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Nastavit API URL z storage nebo použít default
   if (result.apiUrl) {
     apiUrl = result.apiUrl;
-    console.log('📍 API URL from storage (raw):', apiUrl);
+    console.log('✅ API URL from storage:', apiUrl);
   } else {
     const apiUrlInput = document.getElementById('apiUrl');
     if (apiUrlInput && apiUrlInput.value) {
       apiUrl = apiUrlInput.value;
-      console.log('📍 API URL from HTML input (raw):', apiUrl);
+      await chrome.storage.sync.set({ apiUrl: apiUrl });
+      console.log('✅ API URL from HTML input:', apiUrl);
     } else {
       console.log('⚠️ Using default API URL:', apiUrl);
     }
   }
   
-  // ✅ Normalizovat API URL (odstranit www., zajistit https://)
-  apiUrl = apiUrl.replace(/^(https?:\/\/)?(www\.)?/, 'https://').replace(/\/$/, '');
-  console.log('✅ API URL (normalized):', apiUrl);
-  
-  // Uložit normalizovanou URL zpět do storage
-  if (apiUrl !== result.apiUrl) {
-    await chrome.storage.sync.set({ apiUrl: apiUrl });
-    console.log('💾 Saved normalized URL to storage');
-  }
-  
   if (result.apiToken && result.userEmail) {
     // User is logged in
     console.log('✅ User is logged in:', result.userEmail);
-    
-    // Zkontrolovat validitu tokenu a případně refreshnout
-    const validToken = await getValidToken(result.apiToken, result.refreshToken);
-    if (validToken) {
-      showLoggedIn(result.userEmail, validToken);
-    } else {
-      console.error('❌ Token is invalid and cannot be refreshed');
-      showLoginForm();
-    }
+    showLoggedIn(result.userEmail, result.apiToken);
   } else if (result.pendingEmail) {
     // Obnovit code step (čeká na OTP kód)
     console.log('🔄 Restoring code step for:', result.pendingEmail);
@@ -554,8 +473,6 @@ async function verifyCode() {
     const data = await response.json();
     
     if (response.ok && data.token) {
-      console.log('✅ Login successful - synchronizing sessions');
-      
       // Success! Save token, refreshToken, email and API URL
       await chrome.storage.sync.set({ 
         apiToken: data.token,
@@ -566,44 +483,6 @@ async function verifyCode() {
       
       // Vymazat temporary stav autentizace
       await chrome.storage.sync.remove(['pendingEmail']);
-      
-      // Synchronizovat token do všech otevřených gallery tabů
-      try {
-        const tabs = await chrome.tabs.query({});
-        
-        for (const tab of tabs) {
-          if (tab.url && (tab.url.includes('/gallery') || tab.url.includes(apiUrl))) {
-            try {
-              await chrome.scripting.executeScript({
-                target: { tabId: tab.id },
-                func: (token, refreshToken, email) => {
-                  // Uložit tokeny do localStorage
-                  localStorage.setItem('token', token);
-                  if (refreshToken) {
-                    localStorage.setItem('refreshToken', refreshToken);
-                  }
-                  localStorage.setItem('userEmail', email);
-                  console.log('🔄 Extension login - localStorage synchronized');
-                  
-                  // Pokud jsme na login stránce, přesměrovat na gallery
-                  if (window.location.pathname.includes('/gallery/login')) {
-                    window.location.href = '/gallery';
-                  } else if (window.location.pathname.includes('/gallery')) {
-                    // Refresh gallery aby se načetly nové ikony
-                    window.location.reload();
-                  }
-                },
-                args: [data.token, data.refreshToken, currentEmail]
-              });
-              console.log('✅ Synchronized session for tab:', tab.url);
-            } catch (err) {
-              console.log('⚠️  Could not sync session for tab:', tab.url, err.message);
-            }
-          }
-        }
-      } catch (error) {
-        console.error('❌ Error synchronizing gallery sessions:', error);
-      }
       
       showLoggedIn(currentEmail, data.token);
     } else {
@@ -710,46 +589,21 @@ function attachGalleryListeners() {
   
   // Logout button
   logoutBtn.addEventListener('click', async () => {
-    console.log('🔓 Logout clicked - clearing all sessions');
-    
-    // Vymazat extension storage
     await chrome.storage.sync.remove(['apiToken', 'refreshToken', 'userEmail']);
     
-    // Vymazat localStorage na všech gallery tabech
-    try {
-      const tabs = await chrome.tabs.query({});
-      
-      for (const tab of tabs) {
-        if (tab.url && (tab.url.includes('/gallery') || tab.url.includes(apiUrl))) {
-          try {
-            await chrome.scripting.executeScript({
-              target: { tabId: tab.id },
-              func: () => {
-                // Vymazat všechny auth tokeny z localStorage
-                localStorage.removeItem('token');
-                localStorage.removeItem('refreshToken');
-                localStorage.removeItem('userEmail');
-                console.log('🧹 Extension logout - localStorage cleared');
-                
-                // Pokud jsme na gallery stránce, přesměrovat na login
-                if (window.location.pathname.includes('/gallery') && 
-                    !window.location.pathname.includes('/login')) {
-                  window.location.href = '/gallery/login';
-                }
-              }
-            });
-            console.log('✅ Cleared session for tab:', tab.url);
-          } catch (err) {
-            // Tab možná nemá permissions nebo není dostupný
-            console.log('⚠️  Could not clear session for tab:', tab.url, err.message);
-          }
+    // ===== NOVÉ: Notifikovat všechny galerie taby o odhlášení =====
+    chrome.tabs.query({}, (tabs) => {
+      tabs.forEach((tab) => {
+        if (tab.url && tab.url.includes('/gallery')) {
+          chrome.tabs.sendMessage(tab.id, {
+            action: 'extensionLogout'
+          }).catch(() => {
+            // Ignorovat chyby pro taby bez content scriptu
+          });
         }
-      }
-    } catch (error) {
-      console.error('❌ Error clearing gallery sessions:', error);
-    }
+      });
+    });
     
-    console.log('✅ Logout complete');
     showLoginForm();
   });
 }
@@ -811,223 +665,69 @@ function recolorToBlack(svg) {
 
 async function loadRecentIcons(token) {
   try {
-    console.log('🔄 Loading recent icons...');
-    console.log('🔑 Token length:', token?.length);
-    console.log('🔑 Token preview:', token?.substring(0, 30) + '...');
+    // Načíst ikony a statistiky
+    const [iconsResponse, statsResponse] = await Promise.all([
+      fetch(`${apiUrl}/api/gallery`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      }),
+      fetch(`${apiUrl}/api/gallery/stats`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+    ]);
     
-    // Clear icons list and show loading state
-    iconsList.innerHTML = '<div class="loading-state">Loading...</div>';
-    
-    // Try API with detailed logging
-    console.log('📍 API URL:', apiUrl);
-    console.log('📤 Sending request with Authorization header');
-    
-    try {
-      const [iconsResponse, statsResponse] = await Promise.all([
-        fetch(`${apiUrl}/api/gallery`, {
-          method: 'GET',
-          headers: { 
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include'
-        }),
-        fetch(`${apiUrl}/api/gallery/stats`, {
-          method: 'GET',
-          headers: { 
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include'
-        })
-      ]);
+    if (iconsResponse.ok && statsResponse.ok) {
+      const icons = await iconsResponse.json();
+      const stats = await statsResponse.json();
+      const totalIcons = icons.length;
       
-      console.log('📥 API responses:', {
-        icons: iconsResponse.status,
-        stats: statsResponse.status
+      // Update gallery limit s dynamickým limitem z API
+      limitText.textContent = `${stats.current || totalIcons}/${stats.limit || 100}`;
+      
+      // Clear icons list
+      iconsList.innerHTML = '';
+      
+      // Display first 3 icons
+      const displayIcons = icons.slice(0, 3);
+      displayIcons.forEach(icon => {
+        const iconItem = document.createElement('div');
+        iconItem.className = 'icon-item';
+        
+        // Detekovat jednobarevné SVG a přebarvit na černou
+        let svg = icon.svg;
+        if (isSingleColor(svg)) {
+          svg = recolorToBlack(svg);
+        }
+        
+        iconItem.innerHTML = svg;
+        iconItem.addEventListener('click', () => {
+          chrome.tabs.create({ url: `${apiUrl}/gallery` });
+        });
+        iconsList.appendChild(iconItem);
       });
       
-      // Pokud API vrátí 401, logovat response body
-      if (iconsResponse.status === 401 || statsResponse.status === 401) {
-        const errorBody = await iconsResponse.clone().text();
-        console.error('❌ API returned 401:', errorBody);
-        console.log('🔍 Server says token is invalid or missing');
+      // Add empty slots
+      for (let i = displayIcons.length; i < 3; i++) {
+        const iconItem = document.createElement('div');
+        iconItem.className = 'icon-item empty';
+        iconsList.appendChild(iconItem);
       }
       
-      if (iconsResponse.ok && statsResponse.ok) {
-        console.log('✅ API call successful, loading from API');
-        const icons = await iconsResponse.json();
-        const stats = await statsResponse.json();
-        
-        console.log(`✅ Loaded ${icons.length} icons from API`);
-        
-        // Zobrazit ikony pomocí helper funkce
-        displayIconsInPopup(icons, stats);
-        return; // Success - exit funkce
-      } else {
-        // API vrátilo error - fallback na localStorage
-        console.warn('⚠️  API failed, falling back to localStorage method');
-        throw new Error('API returned ' + iconsResponse.status);
+      // Add "+X" indicator if more than 3 icons
+      if (totalIcons > 3) {
+        const moreItem = document.createElement('div');
+        moreItem.className = 'icon-item more';
+        moreItem.textContent = `+${totalIcons - 3}`;
+        moreItem.addEventListener('click', () => {
+          chrome.tabs.create({ url: `${apiUrl}/gallery` });
+        });
+        iconsList.appendChild(moreItem);
       }
-    } catch (apiError) {
-      // API selhalo - zkusit localStorage fallback
-      console.log('🔄 API failed, trying localStorage fallback...');
-      console.log('📦 Opening gallery page to read localStorage...');
-      
-      // Otevřít gallery page v hidden iframe
-      return new Promise((resolve) => {
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        iframe.src = `${apiUrl}/gallery`;
-        
-        const timeout = setTimeout(() => {
-          document.body.removeChild(iframe);
-          console.error('❌ localStorage fallback timeout');
-          showIconsError('Connection timeout');
-          resolve();
-        }, 10000); // 10s timeout
-        
-        iframe.onload = async () => {
-          try {
-            clearTimeout(timeout);
-            
-            // Pokusit se číst localStorage z iframe
-            const galleryToken = iframe.contentWindow.localStorage.getItem('token');
-            
-            if (!galleryToken) {
-              console.warn('⚠️  No token in gallery localStorage');
-              throw new Error('No gallery token');
-            }
-            
-            console.log('✅ Gallery token found, fetching data...');
-            
-            // Fetch s gallery tokenem
-            const [iconsResp, statsResp] = await Promise.all([
-              fetch(`${apiUrl}/api/gallery`, {
-                headers: { 'Authorization': `Bearer ${galleryToken}` }
-              }),
-              fetch(`${apiUrl}/api/gallery/stats`, {
-                headers: { 'Authorization': `Bearer ${galleryToken}` }
-              })
-            ]);
-            
-            if (iconsResp.ok && statsResp.ok) {
-              const icons = await iconsResp.json();
-              const stats = await statsResp.json();
-              
-              console.log(`✅ Loaded ${icons.length} icons via localStorage fallback`);
-              
-              // Zobrazit ikony (stejný kód jako výše)
-              displayIconsInPopup(icons, stats);
-            } else {
-              throw new Error('Gallery API also failed');
-            }
-            
-          } catch (error) {
-            console.error('❌ localStorage fallback failed:', error);
-            showIconsError('Failed to load icons');
-          } finally {
-            document.body.removeChild(iframe);
-            resolve();
-          }
-        };
-        
-        iframe.onerror = () => {
-          clearTimeout(timeout);
-          document.body.removeChild(iframe);
-          console.error('❌ Failed to load gallery iframe');
-          showIconsError('Connection error');
-          resolve();
-        };
-        
-        document.body.appendChild(iframe);
-      });
+    } else {
+      console.error('Failed to load icons');
     }
-    
   } catch (error) {
-    console.error('❌ Error loading icons:', error);
-    showIconsError('Connection error');
+    console.error('Error loading icons:', error);
   }
-}
-
-// Helper funkce pro zobrazení ikon (DRY)
-function displayIconsInPopup(icons, stats) {
-  const totalIcons = icons.length;
-  
-  // Update gallery limit
-  limitText.textContent = `${stats.current || totalIcons}/${stats.limit || 100}`;
-  
-  // Clear icons list
-  iconsList.innerHTML = '';
-  
-  if (totalIcons === 0) {
-    const emptyState = document.createElement('div');
-    emptyState.className = 'empty-state';
-    emptyState.innerHTML = `
-      <div style="text-align: center; padding: 20px; color: #666; font-size: 13px;">
-        <div style="font-size: 24px; margin-bottom: 8px;">📦</div>
-        <div>No icons yet</div>
-        <div style="font-size: 11px; margin-top: 4px;">Save SVGs to your gallery</div>
-      </div>
-    `;
-    iconsList.appendChild(emptyState);
-    return;
-  }
-  
-  // Display last 3 icons (newest first)
-  const displayIcons = icons.slice(-3).reverse();
-  
-  displayIcons.forEach(icon => {
-    const iconItem = document.createElement('div');
-    iconItem.className = 'icon-item';
-    
-    let svg = icon.svg;
-    if (isSingleColor(svg)) {
-      svg = recolorToBlack(svg);
-    }
-    
-    iconItem.innerHTML = svg;
-    iconItem.addEventListener('click', () => {
-      chrome.tabs.create({ url: `${apiUrl}/gallery` });
-    });
-    iconsList.appendChild(iconItem);
-  });
-  
-  // Add empty slots
-  for (let i = displayIcons.length; i < 3; i++) {
-    const iconItem = document.createElement('div');
-    iconItem.className = 'icon-item empty';
-    iconsList.appendChild(iconItem);
-  }
-  
-  // Add "+X" indicator
-  if (totalIcons > 3) {
-    const moreItem = document.createElement('div');
-    moreItem.className = 'icon-item more';
-    moreItem.textContent = `+${totalIcons - 3}`;
-    moreItem.addEventListener('click', () => {
-      chrome.tabs.create({ url: `${apiUrl}/gallery` });
-    });
-    iconsList.appendChild(moreItem);
-  }
-}
-
-// Helper funkce pro zobrazení error (DRY)
-function showIconsError(message) {
-  iconsList.innerHTML = '';
-  const errorState = document.createElement('div');
-  errorState.className = 'error-state';
-  errorState.innerHTML = `
-    <div style="text-align: center; padding: 20px; color: #d32f2f; font-size: 13px;">
-      <div style="font-size: 24px; margin-bottom: 8px;">⚠️</div>
-      <div>${message}</div>
-      <div style="font-size: 11px; margin-top: 4px; color: #666;">Click to open gallery</div>
-    </div>
-  `;
-  errorState.addEventListener('click', () => {
-    chrome.tabs.create({ url: `${apiUrl}/gallery` });
-  });
-  iconsList.appendChild(errorState);
 }
 
 // Poslouchat na změny v chrome.storage (pro automatické přihlášení po aktivaci)

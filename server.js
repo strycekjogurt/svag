@@ -20,21 +20,11 @@ const app = express();
 
 // CORS konfigurace - povolit všechny originy (pro Chrome extension)
 app.use(cors({
-  origin: true,  // ✅ Změna: podporuje jakýkoli origin včetně chrome-extension://
+  origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  exposedHeaders: ['Authorization'],  // ✅ Přidáno
-  credentials: true  // ✅ Změna: povolit credentials
+  credentials: false
 }));
-
-// Explicitní OPTIONS pre-flight handler pro všechny API routes
-app.options('/api/*', (req, res) => {
-  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.sendStatus(204);
-});
 
 app.use(express.json({ limit: '10mb' }));
 
@@ -213,41 +203,23 @@ function calculateSizes(svgContent) {
 
 // Middleware pro autentizaci
 async function authenticate(req, res, next) {
-  // DEBUG: Log všechny headers
-  console.log('🔍 [AUTH] Request headers:', {
-    authorization: req.headers.authorization ? 'present' : 'MISSING',
-    contentType: req.headers['content-type'],
-    origin: req.headers.origin,
-    userAgent: req.headers['user-agent']?.substring(0, 50)
-  });
-  
   const token = req.headers.authorization?.split(' ')[1];
   
   if (!token) {
-    console.log('⚠️  [AUTH] Authentication failed: No token provided');
-    console.log('    Authorization header:', req.headers.authorization);
+    console.log('⚠️ Authentication failed: No token provided');
     return res.status(401).json({ error: 'No token provided' });
   }
   
-  console.log('🔑 [AUTH] Token received, length:', token.length);
-  console.log('    Token preview:', token.substring(0, 30) + '...');
+  const { data: { user }, error } = await supabase.auth.getUser(token);
   
-  try {
-    const { data: { user }, error } = await supabase.auth.getUser(token);
-    
-    if (error || !user) {
-      console.log('⚠️  [AUTH] Supabase validation failed:', error?.message || 'No user');
-      console.log('    Error details:', JSON.stringify(error, null, 2));
-      return res.status(401).json({ error: 'Invalid token' });
-    }
-    
-    console.log('✅ [AUTH] Authentication successful:', user.email);
-    req.user = user;
-    next();
-  } catch (err) {
-    console.error('❌ [AUTH] Exception during authentication:', err);
-    return res.status(401).json({ error: 'Authentication error' });
+  if (error || !user) {
+    console.log('⚠️ Authentication failed: Invalid token', error?.message);
+    return res.status(401).json({ error: 'Invalid token' });
   }
+  
+  console.log('✅ Authentication successful:', user.email);
+  req.user = user;
+  next();
 }
 
 // Middleware pro admin autentizaci
