@@ -67,6 +67,32 @@ chrome.storage.sync.get(['colorScheme', 'buttonOrder'], (result) => {
   }
 });
 
+// Helper funkce pro dekódování SVG data URI
+function decodeSvgDataUri(dataUri) {
+  try {
+    // data:image/svg+xml;base64,PHN2Zy...
+    if (dataUri.includes(';base64,')) {
+      const base64 = dataUri.split(';base64,')[1];
+      return atob(base64);
+    }
+    // data:image/svg+xml,%3Csvg... (URL encoded)
+    else if (dataUri.includes('data:image/svg+xml,')) {
+      const encoded = dataUri.split('data:image/svg+xml,')[1];
+      return decodeURIComponent(encoded);
+    }
+    // data:image/svg+xml;charset=utf-8,...
+    else if (dataUri.includes('charset=')) {
+      const parts = dataUri.split(',');
+      if (parts.length > 1) {
+        return decodeURIComponent(parts.slice(1).join(','));
+      }
+    }
+  } catch (error) {
+    console.error('Error decoding SVG data URI:', error);
+  }
+  return null;
+}
+
 // Poslouchat změny nastavení
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'updateColorScheme') {
@@ -266,10 +292,14 @@ function createActionPopup() {
   return popup;
 }
 
-// Získání SVG dat z různých zdrojů
+// Získání SVG dat z různých zdrojů (vylepšená verze)
 function getSvgData(element) {
+  if (!element) return null;
+  
+  const tagName = element.tagName?.toLowerCase();
+  
   // Případ 1: Inline SVG
-  if (element.tagName.toLowerCase() === 'svg') {
+  if (tagName === 'svg') {
     return {
       type: 'inline',
       content: element.outerHTML,
@@ -277,32 +307,127 @@ function getSvgData(element) {
     };
   }
   
-  // Případ 2: IMG s SVG src
-  if (element.tagName.toLowerCase() === 'img' && element.src && element.src.includes('.svg')) {
-    return {
-      type: 'img',
-      url: element.src,
-      element: element
-    };
+  // Případ 2: IMG s SVG (včetně data URI)
+  if (tagName === 'img' && element.src) {
+    // Data URI SVG
+    if (element.src.startsWith('data:image/svg+xml')) {
+      const content = decodeSvgDataUri(element.src);
+      if (content) {
+        return {
+          type: 'data-uri',
+          content: content,
+          element: element
+        };
+      }
+    }
+    // Běžné .svg soubory
+    if (element.src.includes('.svg') || element.src.match(/\.svg[?#]/)) {
+      return {
+        type: 'img',
+        url: element.src,
+        element: element
+      };
+    }
   }
   
-  // Případ 3: Element s SVG background
-  const bgImage = window.getComputedStyle(element).backgroundImage;
-  if (bgImage && bgImage.includes('.svg')) {
-    const urlMatch = bgImage.match(/url\(['"]?(.*?)['"]?\)/);
+  // Případ 3: OBJECT element
+  if (tagName === 'object') {
+    const data = element.getAttribute('data');
+    const type = element.getAttribute('type');
+    if ((type === 'image/svg+xml' || (data && data.includes('.svg')))) {
+      return {
+        type: 'object',
+        url: data,
+        element: element
+      };
+    }
+  }
+  
+  // Případ 4: EMBED element
+  if (tagName === 'embed') {
+    const src = element.getAttribute('src');
+    const type = element.getAttribute('type');
+    if ((type === 'image/svg+xml' || (src && src.includes('.svg')))) {
+      return {
+        type: 'embed',
+        url: src,
+        element: element
+      };
+    }
+  }
+  
+  // Případ 5: Element s SVG background (včetně data URI)
+  const styles = window.getComputedStyle(element);
+  const bgImage = styles.backgroundImage;
+  
+  if (bgImage && bgImage !== 'none') {
+    // Data URI v background
+    if (bgImage.includes('data:image/svg+xml')) {
+      const dataUriMatch = bgImage.match(/url\(['"]?(data:image\/svg\+xml[^'"')]+)['"]?\)/);
+      if (dataUriMatch) {
+        const content = decodeSvgDataUri(dataUriMatch[1]);
+        if (content) {
+          return {
+            type: 'background-data-uri',
+            content: content,
+            element: element
+          };
+        }
+      }
+    }
+    // Běžné .svg v background
+    if (bgImage.includes('.svg')) {
+      const urlMatch = bgImage.match(/url\(['"]?(.*?\.svg[^'"')]*?)['"]?\)/);
+      if (urlMatch) {
+        return {
+          type: 'background',
+          url: urlMatch[1],
+          element: element
+        };
+      }
+    }
+  }
+  
+  // Případ 6: CSS mask
+  const mask = styles.mask || styles.webkitMask;
+  if (mask && mask.includes('.svg')) {
+    const urlMatch = mask.match(/url\(['"]?(.*?\.svg[^'"')]*?)['"]?\)/);
     if (urlMatch) {
       return {
-        type: 'background',
+        type: 'mask',
         url: urlMatch[1],
         element: element
       };
     }
   }
   
-  // Případ 4: Use element uvnitř SVG
-  if (element.tagName.toLowerCase() === 'use') {
+  // Případ 7: CSS clip-path
+  const clipPath = styles.clipPath || styles.webkitClipPath;
+  if (clipPath && clipPath.includes('.svg')) {
+    const urlMatch = clipPath.match(/url\(['"]?(.*?\.svg[^'"')]*?)['"]?\)/);
+    if (urlMatch) {
+      return {
+        type: 'clip-path',
+        url: urlMatch[1],
+        element: element
+      };
+    }
+  }
+  
+  // Případ 8: USE element s externím sprite
+  if (tagName === 'use') {
+    const href = element.getAttribute('href') || element.getAttribute('xlink:href');
     const svg = element.closest('svg');
-    if (svg) {
+    
+    if (href && href.includes('.svg')) {
+      // Externí sprite
+      return {
+        type: 'sprite',
+        url: href,
+        element: svg || element
+      };
+    } else if (svg) {
+      // Interní use
       return {
         type: 'use',
         content: svg.outerHTML,
@@ -311,10 +436,32 @@ function getSvgData(element) {
     }
   }
   
+  // Případ 9: Zkontrolovat pseudo-elementy (::before, ::after)
+  try {
+    const beforeContent = window.getComputedStyle(element, '::before').content;
+    const afterContent = window.getComputedStyle(element, '::after').content;
+    
+    for (const content of [beforeContent, afterContent]) {
+      if (content && content.includes('.svg')) {
+        const urlMatch = content.match(/url\(['"]?(.*?\.svg[^'"')]*?)['"]?\)/);
+        if (urlMatch) {
+          return {
+            type: 'pseudo-element',
+            url: urlMatch[1],
+            element: element
+          };
+        }
+      }
+    }
+  } catch (error) {
+    // Některé browsery mohou vyhodit chybu při přístupu k pseudo-elementům
+    console.debug('Cannot access pseudo-elements:', error);
+  }
+  
   return null;
 }
 
-// Kontrola, zda je element SVG nebo obsahuje SVG
+// Kontrola, zda je element SVG nebo obsahuje SVG (vylepšená verze)
 function isSvgElement(element) {
   if (!element || !element.tagName) return false;
   
@@ -325,15 +472,55 @@ function isSvgElement(element) {
     return true;
   }
   
-  // IMG s .svg
-  if (tagName === 'img' && element.src && element.src.includes('.svg')) {
+  // IMG s .svg nebo SVG data URI
+  if (tagName === 'img' && element.src) {
+    if (element.src.startsWith('data:image/svg+xml') || 
+        element.src.includes('.svg')) {
+      return true;
+    }
+  }
+  
+  // OBJECT a EMBED s SVG
+  if (tagName === 'object' || tagName === 'embed') {
+    const src = element.getAttribute('src') || element.getAttribute('data');
+    const type = element.getAttribute('type');
+    if (type === 'image/svg+xml' || (src && src.includes('.svg'))) {
+      return true;
+    }
+  }
+  
+  // Computed styles
+  const styles = window.getComputedStyle(element);
+  
+  // Background s SVG (včetně data URI)
+  const bgImage = styles.backgroundImage;
+  if (bgImage && (bgImage.includes('.svg') || bgImage.includes('data:image/svg+xml'))) {
     return true;
   }
   
-  // Background s SVG
-  const bgImage = window.getComputedStyle(element).backgroundImage;
-  if (bgImage && bgImage.includes('.svg')) {
+  // CSS mask
+  const mask = styles.mask || styles.webkitMask;
+  if (mask && mask.includes('.svg')) {
     return true;
+  }
+  
+  // CSS clip-path
+  const clipPath = styles.clipPath || styles.webkitClipPath;
+  if (clipPath && clipPath.includes('.svg')) {
+    return true;
+  }
+  
+  // Pseudo-elementy
+  try {
+    const beforeContent = window.getComputedStyle(element, '::before').content;
+    const afterContent = window.getComputedStyle(element, '::after').content;
+    if ((beforeContent && beforeContent.includes('.svg')) || 
+        (afterContent && afterContent.includes('.svg'))) {
+      return true;
+    }
+  } catch (error) {
+    // Ignorovat chyby při přístupu k pseudo-elementům
+    console.debug('Cannot access pseudo-elements:', error);
   }
   
   return false;
@@ -535,18 +722,70 @@ function downloadDirectly(url, filename, sizeKB = null) {
   showNotification(message, popupPosition);
 }
 
-// Stažení SVG
+// Stažení SVG (vylepšená verze s podporou všech typů)
 async function downloadSvg(svgData) {
   let content = svgData.content;
   
-  // Pokud ještě nemáme content (pro img/background), načteme ho
+  // Pokud ještě nemáme content (pro URL-based SVG), načteme ho
   if (!content && svgData.url) {
     try {
-      const response = await fetch(svgData.url);
-      content = await response.text();
+      // Pro sprite s fragmentem (#icon-name)
+      if (svgData.url.includes('#')) {
+        const [url, fragment] = svgData.url.split('#');
+        const response = await fetch(url);
+        const svgText = await response.text();
+        
+        // Pokusit se extrahovat konkrétní symbol
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(svgText, 'image/svg+xml');
+        const symbol = doc.getElementById(fragment);
+        
+        if (symbol) {
+          // Převést symbol na SVG
+          const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          svg.innerHTML = symbol.innerHTML;
+          // Zkopírovat viewBox ze symbolu pokud existuje
+          if (symbol.getAttribute('viewBox')) {
+            svg.setAttribute('viewBox', symbol.getAttribute('viewBox'));
+          }
+          content = svg.outerHTML;
+        } else {
+          content = svgText;
+        }
+      } else {
+        const response = await fetch(svgData.url);
+        content = await response.text();
+      }
     } catch (error) {
+      console.error('Chyba při načítání SVG:', error);
       showNotification('load error', popupPosition);
       return;
+    }
+  }
+  
+  // Pro OBJECT a EMBED - získat obsah z contentDocument
+  if (!content && (svgData.type === 'object' || svgData.type === 'embed')) {
+    try {
+      const contentDoc = svgData.element.contentDocument;
+      if (contentDoc) {
+        const svgElement = contentDoc.querySelector('svg');
+        if (svgElement) {
+          content = svgElement.outerHTML;
+        }
+      }
+    } catch (error) {
+      // Cross-origin může blokovat přístup
+      console.log('Cannot access contentDocument, trying URL');
+      if (svgData.url) {
+        try {
+          const response = await fetch(svgData.url);
+          content = await response.text();
+        } catch (fetchError) {
+          console.error('Chyba při načítání SVG:', fetchError);
+          showNotification('load error', popupPosition);
+          return;
+        }
+      }
     }
   }
   
@@ -605,13 +844,71 @@ async function downloadSvg(svgData) {
   hideActionPopup();
 }
 
-// Odeslání do galerie
+// Odeslání do galerie (vylepšená verze s podporou všech typů)
 async function sendToGallery(svgData) {
   let content = svgData.content;
   
+  // Pokud ještě nemáme content (pro URL-based SVG), načteme ho
   if (!content && svgData.url) {
-    const response = await fetch(svgData.url);
-    content = await response.text();
+    try {
+      // Pro sprite s fragmentem (#icon-name)
+      if (svgData.url.includes('#')) {
+        const [url, fragment] = svgData.url.split('#');
+        const response = await fetch(url);
+        const svgText = await response.text();
+        
+        // Pokusit se extrahovat konkrétní symbol
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(svgText, 'image/svg+xml');
+        const symbol = doc.getElementById(fragment);
+        
+        if (symbol) {
+          // Převést symbol na SVG
+          const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          svg.innerHTML = symbol.innerHTML;
+          // Zkopírovat viewBox ze symbolu pokud existuje
+          if (symbol.getAttribute('viewBox')) {
+            svg.setAttribute('viewBox', symbol.getAttribute('viewBox'));
+          }
+          content = svg.outerHTML;
+        } else {
+          content = svgText;
+        }
+      } else {
+        const response = await fetch(svgData.url);
+        content = await response.text();
+      }
+    } catch (error) {
+      console.error('Chyba při načítání SVG:', error);
+      showNotification('load error', popupPosition);
+      return;
+    }
+  }
+  
+  // Pro OBJECT a EMBED - získat obsah z contentDocument
+  if (!content && (svgData.type === 'object' || svgData.type === 'embed')) {
+    try {
+      const contentDoc = svgData.element.contentDocument;
+      if (contentDoc) {
+        const svgElement = contentDoc.querySelector('svg');
+        if (svgElement) {
+          content = svgElement.outerHTML;
+        }
+      }
+    } catch (error) {
+      // Cross-origin může blokovat přístup
+      console.log('Cannot access contentDocument, trying URL');
+      if (svgData.url) {
+        try {
+          const response = await fetch(svgData.url);
+          content = await response.text();
+        } catch (fetchError) {
+          console.error('Chyba při načítání SVG:', fetchError);
+          showNotification('load error', popupPosition);
+          return;
+        }
+      }
+    }
   }
   
   if (!content) {
@@ -843,5 +1140,6 @@ document.addEventListener('click', (e) => {
   showActionPopup(e.clientX, e.clientY);
 });
 
-console.log('svag extension loaded');
+console.log('svag extension loaded - enhanced SVG detection v2.0');
+console.log('Supported SVG types: inline, img, data-uri, object, embed, background, sprite, mask, clip-path, pseudo-elements');
 

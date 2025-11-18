@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test vylepšené detekce SVG - svag extension</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 40px;
+      background: #f5f5f5;
+      line-height: 1.6;
+    }
+    
+    h1 {
+      margin-bottom: 10px;
+      color: #333;
+    }
+    
+    .intro {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      border-left: 4px solid #007bff;
+    }
+    
+    .intro p {
+      margin-bottom: 10px;
+    }
+    
+    .intro code {
+      background: #f0f0f0;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 14px;
+    }
+    
+    .test-section {
+      background: white;
+      padding: 30px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .test-section h2 {
+      color: #007bff;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .badge {
+      background: #28a745;
+      color: white;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: normal;
+    }
+    
+    .badge.new {
+      background: #ffc107;
+      color: #000;
+    }
+    
+    .test-item {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 15px;
+      background: #f9f9f9;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      border: 2px dashed #ddd;
+      transition: all 0.2s;
+    }
+    
+    .test-item:hover {
+      border-color: #007bff;
+      background: #f0f7ff;
+    }
+    
+    .test-item .icon-container {
+      min-width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: white;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+    }
+    
+    .test-item .description {
+      flex: 1;
+    }
+    
+    .test-item .description strong {
+      display: block;
+      color: #333;
+      margin-bottom: 5px;
+    }
+    
+    .test-item .description code {
+      background: #e9ecef;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 12px;
+      color: #d63384;
+    }
+    
+    /* Specifické styly pro SVG testy */
+    .bg-svg {
+      width: 50px;
+      height: 50px;
+      background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Cpath fill="%23007bff" d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/%3E%3C/svg%3E');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+    
+    .bg-svg-datauri {
+      width: 50px;
+      height: 50px;
+      background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iIzI4YTc0NSIgZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bS0yIDE1bC01LTUgMS40MS0xLjQxTDEwIDE0LjE3bDcuNTktNy41OUwxOSA4bC05IDl6Ii8+PC9zdmc+');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+    
+    .pseudo-icon::before {
+      content: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"%3E%3Cpath fill="%23dc3545" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/%3E%3C/svg%3E');
+      display: inline-block;
+    }
+    
+    .mask-icon {
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      mask: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Cpath d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/%3E%3C/svg%3E');
+      -webkit-mask: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E%3Cpath d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/%3E%3C/svg%3E');
+      mask-size: contain;
+      -webkit-mask-size: contain;
+      mask-repeat: no-repeat;
+      -webkit-mask-repeat: no-repeat;
+      mask-position: center;
+      -webkit-mask-position: center;
+    }
+    
+    svg {
+      display: block;
+    }
+    
+    .warning {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      color: #856404;
+      padding: 15px;
+      border-radius: 6px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎨 Test vylepšené detekce SVG</h1>
+  
+  <div class="intro">
+    <p><strong>Jak testovat:</strong></p>
+    <ol>
+      <li>Ujistěte se, že máte nainstalované rozšíření <strong>svag</strong></li>
+      <li>Držte klávesu <code>Cmd</code> (Mac) nebo <code>Ctrl</code> (Windows)</li>
+      <li>Najeďte myší na kterýkoliv SVG element níže</li>
+      <li>Měly by se objevit action buttony pro stažení nebo uložení do galerie</li>
+    </ol>
+  </div>
+
+  <!-- 1. Inline SVG -->
+  <div class="test-section">
+    <h2>
+      <span class="badge">Původní</span>
+      1. Inline SVG
+    </h2>
+    <div class="test-item">
+      <div class="icon-container">
+        <svg width="50" height="50" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#007bff" d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <div class="description">
+        <strong>Inline SVG Element</strong>
+        <code>&lt;svg&gt;...&lt;/svg&gt;</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. IMG s SVG -->
+  <div class="test-section">
+    <h2>
+      <span class="badge">Původní</span>
+      2. IMG s SVG souborem
+    </h2>
+    <div class="test-item">
+      <div class="icon-container">
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23dc3545' d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E" alt="check" width="50" height="50">
+      </div>
+      <div class="description">
+        <strong>IMG s .svg zdrojem</strong>
+        <code>&lt;img src="icon.svg"&gt;</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Data URI - URL encoded -->
+  <div class="test-section">
+    <h2>
+      <span class="badge new">Nové ✨</span>
+      3. Data URI - URL encoded
+    </h2>
+    <div class="test-item">
+      <div class="icon-container">
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%2328a745' d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z'/%3E%3C/svg%3E" alt="success" width="50">
+      </div>
+      <div class="description">
+        <strong>IMG s URL-encoded data URI</strong>
+        <code>&lt;img src="data:image/svg+xml,%3Csvg..."&gt;</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Data URI - Base64 -->
+  <div class="test-section">
+    <h2>
+      <span class="badge new">Nové ✨</span>
+      4. Data URI - Base64
+    </h2>
+    <div class="test-item">
+      <div class="icon-container">
+        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI2ZmYzEwNyIgZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTEgMTVoLTJ2LTZoMnY2em0wLThoLTJWN2gydjJ6Ii8+PC9zdmc+" alt="warning" width="50">
+      </div>
+      <div class="description">
+        <strong>IMG s Base64-encoded data URI</strong>
+        <code>&lt;img src="data:image/svg+xml;base64,..."&gt;</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Background SVG -->
+  <div class="test-section">
+    <h2>
+      <span class="badge">Původní</span>
+      5. Background SVG
+    </h2>
+    <div class="test-item">
+      <div class="icon-container">
+        <div class="bg-svg"></div>
+      </div>
+      <div class="description">
+        <strong>Element s SVG background (URL-encoded data URI)</strong>
+        <code>background-image: url('data:image/svg+xml,...')</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Background data URI Base64 -->
+  <div class="test-section">
+    <h2>
+      <span class="badge new">Nové ✨</span>
+      6. Background data URI - Base64
+    </h2>
+    <div class="test-item">
+      <div class="icon-container">
+        <div class="bg-svg-datauri"></div>
+      </div>
+      <div class="description">
+        <strong>Element s Base64 data URI background</strong>
+        <code>background-image: url('data:image/svg+xml;base64,...')</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. Pseudo-element -->
+  <div class="test-section">
+    <h2>
+      <span class="badge new">Nové ✨</span>
+      7. Pseudo-element (::before)
+    </h2>
+    <div class="test-item">
+      <div class="icon-container">
+        <div class="pseudo-icon"></div>
+      </div>
+      <div class="description">
+        <strong>SVG v pseudo-elementu</strong>
+        <code>.element::before { content: url('icon.svg'); }</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. CSS Mask -->
+  <div class="test-section">
+    <h2>
+      <span class="badge new">Nové ✨</span>
+      8. CSS Mask
+    </h2>
+    <div class="test-item">
+      <div class="icon-container">
+        <div class="mask-icon"></div>
+      </div>
+      <div class="description">
+        <strong>SVG jako CSS mask</strong>
+        <code>mask: url('mask.svg'); -webkit-mask: url('mask.svg');</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9. Use element -->
+  <div class="test-section">
+    <h2>
+      <span class="badge">Původní</span>
+      9. SVG Use Element
+    </h2>
+    <div class="test-item">
+      <div class="icon-container">
+        <svg width="50" height="50" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <symbol id="star-icon" viewBox="0 0 24 24">
+              <path fill="#ffc107" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+            </symbol>
+          </defs>
+          <use href="#star-icon"/>
+        </svg>
+      </div>
+      <div class="description">
+        <strong>Interní SVG Use</strong>
+        <code>&lt;svg&gt;&lt;use href="#icon"&gt;&lt;/use&gt;&lt;/svg&gt;</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10. Multiple inline icons -->
+  <div class="test-section">
+    <h2>
+      <span class="badge">Původní</span>
+      10. Více inline SVG ikon
+    </h2>
+    <div class="test-item">
+      <div class="icon-container" style="display: flex; gap: 10px;">
+        <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#007bff" d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+        </svg>
+        <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#28a745" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+        </svg>
+        <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#dc3545" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+        </svg>
+      </div>
+      <div class="description">
+        <strong>Několik inline SVG ikon vedle sebe</strong>
+        <code>Držte Cmd a najeďte na každou ikonu zvlášť</code>
+      </div>
+    </div>
+  </div>
+
+  <div class="warning">
+    <strong>⚠️ Poznámka:</strong> Některé typy SVG (OBJECT, EMBED, externí sprite soubory) vyžadují externí SVG soubory a v tomto testu nejsou zahrnuty. 
+    Pro kompletní testování těchto typů si můžete vytvořit vlastní .svg soubory.
+  </div>
+
+  <div class="intro" style="margin-top: 20px;">
+    <p><strong>📊 Co bylo testováno:</strong></p>
+    <ul style="margin-left: 20px;">
+      <li>✅ Inline SVG elementy</li>
+      <li>✅ IMG s SVG (data URI)</li>
+      <li>✅ Data URI - URL encoded</li>
+      <li>✅ Data URI - Base64</li>
+      <li>✅ Background SVG (URL-encoded)</li>
+      <li>✅ Background SVG (Base64)</li>
+      <li>✅ Pseudo-elementy (::before)</li>
+      <li>✅ CSS Mask</li>
+      <li>✅ SVG Use element</li>
+    </ul>
+  </div>
+</body>
+</html>
+
