@@ -44,9 +44,21 @@ app.use('/iframe', express.static(join(__dirname, 'iframe')));
 // Servírovat ikony
 app.use('/icons', express.static(join(__dirname, 'icons')));
 
-// Explicitní route pro favicon - MUSÍ být před ostatními routes
+// Favicon routes - servírují PNG pro nejlepší kvalitu
 app.get('/favicon.ico', (req, res) => {
-  res.sendFile(join(__dirname, 'favicon.ico'));
+  res.sendFile(join(__dirname, 'icons', 'icon128.png'));
+});
+
+app.get('/favicon.png', (req, res) => {
+  res.sendFile(join(__dirname, 'icons', 'icon128.png'));
+});
+
+app.get('/favicon-32x32.png', (req, res) => {
+  res.sendFile(join(__dirname, 'icons', 'icon48.png'));
+});
+
+app.get('/favicon-16x16.png', (req, res) => {
+  res.sendFile(join(__dirname, 'icons', 'icon16.png'));
 });
 
 // Inicializace Supabase
