@@ -166,6 +166,14 @@
 
     async function loadTokenFromExtension() {
       try {
+        // Zkontroluj, jestli je chrome.storage dostupný
+        if (typeof chrome === 'undefined' || !chrome.storage) {
+          log('⚠️  chrome.storage není dostupný - tento soubor musí být načten z extension nebo jako extension page', 'error');
+          log('💡 ŘEŠENÍ: Zkopírujte token ručně z Console pomocí:', 'info');
+          log('   chrome.storage.sync.get(["apiToken"], (r) => console.log(r.apiToken))', 'info');
+          return;
+        }
+        
         const result = await chrome.storage.sync.get(['apiToken', 'apiUrl', 'refreshToken']);
         
         if (result.apiToken) {
@@ -184,9 +192,11 @@
           decodeToken();
         } else {
           log('❌ Token nenalezen v extension storage', 'error');
+          log('💡 Zkuste se přihlásit v extension popup', 'info');
         }
       } catch (error) {
         log(`❌ Chyba při načítání tokenu: ${error.message}`, 'error');
+        log('💡 ŘEŠENÍ: Zkopírujte token ručně z Console', 'info');
       }
     }
 
@@ -305,7 +315,13 @@
 
     // Auto-load token on page load
     window.addEventListener('load', () => {
-      log('🔧 Test nástroj načten. Klikněte na "Načíst token z extension" pro automatické načtení.', 'info');
+      log('🔧 Test nástroj načten.', 'info');
+      log('📋 JAK ZÍSKAT TOKEN:', 'info');
+      log('   1. Otevřete kteroukoliv stránku (např. github.com)', 'info');
+      log('   2. Stiskněte F12 → Console', 'info');
+      log('   3. Zadejte: chrome.storage.sync.get(["apiToken"], (r) => console.log(r.apiToken))', 'info');
+      log('   4. Zkopírujte token a vložte ho do pole výše', 'info');
+      log('   5. Klikněte na "🔍 Dekódovat token" a pak "🚀 Testovat API volání"', 'info');
     });
   </script>
 </body>

@@ -10,6 +10,105 @@ let popupPosition = { x: 0, y: 0 };
 let colorSchemeSetting = 'white-black'; // default
 let buttonOrderSetting = ['gallery', 'download']; // default
 
+// 🧪 Debug helper funkce - dostupné v Console
+window.svagDebug = {
+  // Získat token z storage
+  getToken: async function() {
+    const result = await chrome.storage.sync.get(['apiToken', 'apiUrl', 'refreshToken']);
+    console.log('📦 API Token:', result.apiToken);
+    console.log('📍 API URL:', result.apiUrl);
+    console.log('🔄 Refresh Token:', result.refreshToken ? '✅ Dostupný' : '❌ Chybí');
+    return result.apiToken;
+  },
+  
+  // Dekódovat token
+  decodeToken: async function() {
+    const result = await chrome.storage.sync.get(['apiToken']);
+    if (!result.apiToken) {
+      console.error('❌ Token nenalezen');
+      return null;
+    }
+    
+    try {
+      const payload = JSON.parse(atob(result.apiToken.split('.')[1]));
+      const exp = new Date(payload.exp * 1000);
+      const now = new Date();
+      const timeLeft = ((exp - now) / 1000 / 60).toFixed(1);
+      
+      console.log('🔍 Token Info:');
+      console.log('   User ID:', payload.userId);
+      console.log('   Email:', payload.email);
+      console.log('   Expirace:', exp.toLocaleString());
+      console.log('   Status:', exp > now ? `✅ Platný (${timeLeft} min)` : '❌ VYPRŠEL');
+      
+      return payload;
+    } catch (error) {
+      console.error('❌ Chyba při dekódování:', error);
+      return null;
+    }
+  },
+  
+  // Testovat API call
+  testGalleryAPI: async function() {
+    const result = await chrome.storage.sync.get(['apiToken', 'apiUrl']);
+    
+    if (!result.apiToken) {
+      console.error('❌ Token nenalezen - přihlaste se v extension popup');
+      return;
+    }
+    
+    const testSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" fill="#000"/></svg>`;
+    const apiUrl = `${result.apiUrl || 'https://svag.pro'}/api/gallery`;
+    
+    console.log('🚀 Testuji API call...');
+    console.log('   URL:', apiUrl);
+    console.log('   Token length:', result.apiToken.length);
+    
+    try {
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${result.apiToken}`
+        },
+        body: JSON.stringify({
+          svg: testSvg,
+          name: 'test-debug-' + Date.now()
+        })
+      });
+      
+      const data = await response.text();
+      
+      if (response.ok) {
+        console.log('✅ SUCCESS!', JSON.parse(data));
+      } else {
+        console.error(`❌ ERROR ${response.status}:`, data);
+      }
+      
+      return { status: response.status, data };
+    } catch (error) {
+      console.error('❌ Fetch error:', error);
+      return null;
+    }
+  },
+  
+  // Nápověda
+  help: function() {
+    console.log('🧪 svag Debug Helper v1.2.0');
+    console.log('');
+    console.log('Dostupné příkazy:');
+    console.log('  svagDebug.getToken()        - Zobrazí token z storage');
+    console.log('  svagDebug.decodeToken()     - Dekóduje a zobrazí info o tokenu');
+    console.log('  svagDebug.testGalleryAPI()  - Testuje API call na /api/gallery');
+    console.log('  svagDebug.help()            - Zobrazí tuto nápovědu');
+    console.log('');
+    console.log('💡 TIP: Všechny funkce jsou async, použijte await:');
+    console.log('   await svagDebug.testGalleryAPI()');
+  }
+};
+
+console.log('🧪 [svag v1.2.0] Debug helper načten. Zadejte "svagDebug.help()" pro nápovědu.');
+
 // Helper funkce pro kontrolu a refresh tokenu
 async function getValidToken() {
   const result = await chrome.storage.sync.get(['apiToken', 'refreshToken', 'apiUrl']);
