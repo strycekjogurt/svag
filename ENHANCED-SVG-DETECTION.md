@@ -1,8 +1,104 @@
-# Kompletní detekce SVG v1.1.6
+# Kompletní detekce SVG v1.1.7
 
 ## Přehled změn
 
-### 🔧 v1.1.6 - KRITICKÁ OPRAVA (Aktuální verze)
+### 🚀 v1.1.7 - SVG PATH COMPILER (Aktuální verze)
+
+**PRŮLOMOVÉ ŘEŠENÍ:** Místo kopírování innerHTML a aplikace computed styles, nyní **kompilujeme čistý SVG přímo z elementů a jejich atributů**.
+
+**Proč je to lepší než všechna předchozí řešení?**
+- ✅ **Nativní atributy** - kopíruje přímé atributy (`d`, `fill`, `stroke`)
+- ✅ **Žádné CSS třídy** - nikdy se nekopírují, ani náhodou
+- ✅ **Žádná závislost na DOM** - vytváří nový SVG od začátku
+- ✅ **Fallback na computed** - pouze pokud atribut chybí
+- ✅ **Jednodušší a rychlejší** - méně DOM operací
+- ✅ **Rekurzivní** - správně zpracuje `<g>` groups a nested elementy
+
+**Jak to funguje:**
+
+```javascript
+// 1. Najde všechny shape elementy v symbolu
+const shapes = symbol.querySelectorAll('path, circle, rect, ellipse, line, polygon, polyline, g');
+
+// 2. Pro každý shape:
+shapes.forEach(shape => {
+  // Vytvoří nový čistý element
+  const compiled = document.createElementNS('http://www.w3.org/2000/svg', tagName);
+  
+  // Zkopíruje geometry atributy (d, cx, cy, r, atd.)
+  geomAttrs.forEach(attr => {
+    if (shape.hasAttribute(attr)) {
+      compiled.setAttribute(attr, shape.getAttribute(attr));
+    }
+  });
+  
+  // Zkopíruje style atributy (fill, stroke, atd.)
+  styleAttrs.forEach(attr => {
+    if (shape.hasAttribute(attr)) {
+      let value = shape.getAttribute(attr);
+      // Oprava dvojitého ##
+      value = value.replace(/#+/g, match => match.length > 1 ? '#' : match);
+      compiled.setAttribute(attr, value);
+    }
+  });
+  
+  // FALLBACK: Pokud nemá fill, vzít z computed
+  if (!compiled.hasAttribute('fill')) {
+    const computed = window.getComputedStyle(shape);
+    if (computed.fill && computed.fill !== 'rgb(0, 0, 0)') {
+      compiled.setAttribute('fill', computed.fill.replace(/^#+/, '#'));
+    }
+  }
+  
+  // Pro <g> groups: rekurzivně zkompilovat children
+  if (tagName === 'g') {
+    children.forEach(child => {
+      compiled.appendChild(compileShape(child));
+    });
+  }
+});
+```
+
+**Podporované shape elementy:**
+- `<path>` - d
+- `<circle>` - cx, cy, r
+- `<rect>` - x, y, width, height, rx, ry
+- `<ellipse>` - cx, cy, rx, ry
+- `<line>` - x1, y1, x2, y2
+- `<polygon>` - points
+- `<polyline>` - points
+- `<g>` - group (rekurzivně)
+
+**Kopírované style atributy:**
+- `fill`, `stroke`, `stroke-width`
+- `stroke-linecap`, `stroke-linejoin`, `stroke-dasharray`, `stroke-dashoffset`
+- `opacity`, `fill-opacity`, `stroke-opacity`
+- `fill-rule`, `clip-rule`
+- `transform`, `style`
+
+**Debug logy:**
+```
+[svag] SVG Compiler: Začínám kompilaci...
+[svag] SVG Compiler: Zkompilováno N elementů
+```
+
+**Výsledek:**
+- ✅ Čistý SVG markup bez CSS tříd
+- ✅ Všechny atributy přímo v elementech
+- ✅ Validní SVG bez namespace errorů
+- ✅ Plně samostatný soubor bez závislostí
+- ✅ Funguje v JAKÉMKOLIV SVG vieweru
+
+**Co to řeší:**
+1. ❌ Namespace prefix xlink errors → ✅ Vyřešeno (xmlns správně nastaveny)
+2. ❌ CSS třídy bez stylů → ✅ Vyřešeno (třídy se nikdy nekopírují)
+3. ❌ Dvojitý ## v fill → ✅ Vyřešeno (regex oprava při kopírování)
+4. ❌ Externí stylesheet závislosti → ✅ Vyřešeno (žádné CSS, jen atributy)
+5. ❌ Computed styles problémy → ✅ Vyřešeno (používá se jen jako fallback)
+
+---
+
+### 🔧 v1.1.6 - Computed styles (zastaralé)
 
 **Problém #4:** CSS třídy stále nebyly vyřešeny správně.
 - ❌ Stažené SVG obsahovalo `class="c4 b20"` ale bez stylů

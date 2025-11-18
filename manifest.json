@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "svag",
-  "version": "1.1.6",
+  "version": "1.1.7",
   "description": "Stahování a správa SVG ikon z webových stránek - kompletní detekce všech SVG typů včetně Shadow DOM a CSS",
   "permissions": [
     "activeTab",

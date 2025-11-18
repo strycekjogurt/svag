@@ -135,6 +135,107 @@ function findInShadowRootRecursive(shadowRoot, elementId) {
   return null;
 }
 
+// SVG Compiler - kompiluje čistý SVG z shape elementů (NOVÉ v1.1.7)
+function compileSvgShapes(sourceElement) {
+  const compiledShapes = [];
+  
+  // Najít všechny shape elementy a groups
+  const shapes = sourceElement.querySelectorAll('path, circle, rect, ellipse, line, polygon, polyline, g');
+  
+  shapes.forEach(shape => {
+    // Kompilovat pouze top-level elementy (ne children <g>)
+    // Pokud je element child nějakého <g>, přeskočit (bude zpracován rekurzivně)
+    const parentG = shape.parentElement?.closest('g');
+    if (!parentG || !sourceElement.contains(parentG) || parentG === sourceElement) {
+      const compiled = compileShape(shape);
+      if (compiled) {
+        compiledShapes.push(compiled);
+      }
+    }
+  });
+  
+  return compiledShapes;
+}
+
+// Kompiluje jednotlivý shape element
+function compileShape(sourceShape) {
+  const tagName = sourceShape.tagName.toLowerCase();
+  
+  // Vytvořit nový element stejného typu
+  const compiled = document.createElementNS('http://www.w3.org/2000/svg', tagName);
+  
+  // Definice atributů podle typu elementu
+  const geometryAttrs = {
+    'path': ['d'],
+    'circle': ['cx', 'cy', 'r'],
+    'rect': ['x', 'y', 'width', 'height', 'rx', 'ry'],
+    'ellipse': ['cx', 'cy', 'rx', 'ry'],
+    'line': ['x1', 'y1', 'x2', 'y2'],
+    'polygon': ['points'],
+    'polyline': ['points'],
+    'g': [] // Group nemá geometry atributy
+  };
+  
+  // Style atributy (společné pro všechny)
+  const styleAttrs = [
+    'fill', 'stroke', 'stroke-width', 'stroke-linecap', 
+    'stroke-linejoin', 'stroke-dasharray', 'stroke-dashoffset',
+    'stroke-miterlimit', 'opacity', 'fill-opacity', 
+    'stroke-opacity', 'fill-rule', 'clip-rule',
+    'transform', 'style'
+  ];
+  
+  // 1. Zkopírovat geometry atributy
+  const geomAttrs = geometryAttrs[tagName] || [];
+  geomAttrs.forEach(attr => {
+    if (sourceShape.hasAttribute(attr)) {
+      compiled.setAttribute(attr, sourceShape.getAttribute(attr));
+    }
+  });
+  
+  // 2. Zkopírovat style atributy (pokud existují jako atributy)
+  styleAttrs.forEach(attr => {
+    if (sourceShape.hasAttribute(attr)) {
+      let value = sourceShape.getAttribute(attr);
+      // Oprava dvojitého ## v hodnotách
+      if (typeof value === 'string') {
+        value = value.replace(/#+/g, (match) => match.length > 1 ? '#' : match);
+      }
+      compiled.setAttribute(attr, value);
+    }
+  });
+  
+  // 3. FALLBACK: Pokud NEMÁ fill atribut, vzít z computed styles
+  if (!compiled.hasAttribute('fill') && !compiled.hasAttribute('style')) {
+    try {
+      const computed = window.getComputedStyle(sourceShape);
+      const fill = computed.fill;
+      
+      if (fill && fill !== 'none' && fill !== 'rgb(0, 0, 0)') {
+        // Oprava dvojitého ##
+        const cleanFill = fill.replace(/^#+/, '#');
+        compiled.setAttribute('fill', cleanFill);
+      }
+    } catch (error) {
+      // Computed style může selhat
+      console.debug('[svag] Compiler: Chyba při získávání computed style:', error);
+    }
+  }
+  
+  // 4. Pokud je to <g> (group), zkompilovat children rekurzivně
+  if (tagName === 'g') {
+    const children = sourceShape.querySelectorAll(':scope > path, :scope > circle, :scope > rect, :scope > ellipse, :scope > line, :scope > polygon, :scope > polyline, :scope > g');
+    children.forEach(child => {
+      const compiledChild = compileShape(child);
+      if (compiledChild) {
+        compiled.appendChild(compiledChild);
+      }
+    });
+  }
+  
+  return compiled;
+}
+
 // Helper funkce pro resolving <use> elementů s interními referencemi (vylepšená v1.1.2)
 function resolveUseElement(useElement) {
   const href = useElement.getAttribute('href') || useElement.getAttribute('xlink:href');
@@ -222,116 +323,19 @@ function resolveUseElement(useElement) {
     });
   }
   
-  // NOVÉ: Najít a zkopírovat <style> elementy z dokumentu (oprava chybějících CSS)
-  const stylesToCopy = [];
+  // NOVÉ v1.1.7: SVG PATH COMPILER
+  // Místo kopírování innerHTML a pak aplikace computed styles,
+  // zkompilujeme čistý SVG přímo z elementů a jejich atributů
+  console.log('[svag] SVG Compiler: Začínám kompilaci...');
   
-  // Hledat v parent SVG (může obsahovat <defs> se styly)
-  if (parentSvg) {
-    const parentStyles = parentSvg.querySelectorAll('style');
-    parentStyles.forEach(style => stylesToCopy.push(style.cloneNode(true)));
-  }
+  const compiledShapes = compileSvgShapes(referencedElement);
   
-  // Hledat v dokumentu (globální <defs> nebo <svg> se styly)
-  const documentSvgs = document.querySelectorAll('svg');
-  documentSvgs.forEach(svg => {
-    const styles = svg.querySelectorAll('style');
-    styles.forEach(style => {
-      // Zkontrolovat, jestli už nemáme tento styl
-      const styleContent = style.textContent;
-      const alreadyHas = stylesToCopy.some(s => s.textContent === styleContent);
-      if (!alreadyHas) {
-        stylesToCopy.push(style.cloneNode(true));
-      }
-    });
+  // Přidat zkompilované shapes do nového SVG
+  compiledShapes.forEach(shape => {
+    newSvg.appendChild(shape);
   });
   
-  // Zkopírovat obsah referencovaného elementu
-  if (tagName === 'symbol') {
-    // Symbol - zkopírovat jeho vnitřní obsah
-    newSvg.innerHTML = referencedElement.innerHTML;
-  } else if (tagName === 'g' || tagName === 'path' || tagName === 'circle' || tagName === 'rect' || tagName === 'polygon' || tagName === 'polyline' || tagName === 'line' || tagName === 'ellipse') {
-    // Jiné SVG elementy - zabalit do nového SVG
-    newSvg.innerHTML = referencedElement.outerHTML;
-  } else {
-    // Fallback - zkusit zkopírovat obsah
-    newSvg.innerHTML = referencedElement.innerHTML || referencedElement.outerHTML;
-  }
-  
-  // NOVÉ v1.1.6: Aplikovat computed styles místo CSS tříd
-  // (oprava pro CSS třídy definované v externích stylesheets)
-  try {
-    const sourceElements = Array.from(referencedElement.querySelectorAll('*'));
-    const targetElements = Array.from(newSvg.querySelectorAll('*'));
-    
-    let appliedStyles = 0;
-    
-    for (let i = 0; i < Math.min(sourceElements.length, targetElements.length); i++) {
-      const source = sourceElements[i];
-      const target = targetElements[i];
-      
-      // Získat computed style z původního elementu
-      const computed = window.getComputedStyle(source);
-      
-      // Důležité SVG properties které chceme zachovat
-      const svgProperties = [
-        'fill',
-        'stroke', 
-        'strokeWidth',
-        'strokeDasharray',
-        'strokeDashoffset',
-        'strokeLinecap',
-        'strokeLinejoin',
-        'strokeMiterlimit',
-        'opacity',
-        'fillOpacity',
-        'strokeOpacity',
-        'fillRule',
-        'clipRule',
-        'display',
-        'visibility'
-      ];
-      
-      // Aplikovat computed styles jako inline
-      svgProperties.forEach(prop => {
-        const cssProperty = prop.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`);
-        const value = computed[prop];
-        
-        // Aplikovat pouze pokud má smysluplnou hodnotu
-        if (value && 
-            value !== 'none' && 
-            value !== 'auto' && 
-            value !== 'normal' &&
-            value !== 'rgb(0, 0, 0)' && // Černá je default
-            value !== '0px' &&
-            value !== '0') {
-          
-          // Oprava dvojitého ## pokud existuje
-          const cleanValue = typeof value === 'string' ? value.replace(/^#+/, '#') : value;
-          target.style[prop] = cleanValue;
-          appliedStyles++;
-        }
-      });
-      
-      // Odstranit class atribut (už není potřeba)
-      if (target.hasAttribute('class')) {
-        target.removeAttribute('class');
-      }
-    }
-    
-    if (appliedStyles > 0) {
-      console.log(`[svag] Aplikováno ${appliedStyles} computed styles, odstraněny CSS třídy`);
-    }
-  } catch (error) {
-    console.warn('[svag] Chyba při aplikaci computed styles:', error);
-  }
-  
-  // NOVÉ: Vložit zkopírované <style> elementy na začátek SVG (fallback)
-  if (stylesToCopy.length > 0) {
-    const defsElement = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-    stylesToCopy.forEach(style => defsElement.appendChild(style));
-    newSvg.insertBefore(defsElement, newSvg.firstChild);
-    console.log(`[svag] Zkopírováno ${stylesToCopy.length} <style> elementů`);
-  }
+  console.log(`[svag] SVG Compiler: Zkompilováno ${compiledShapes.length} elementů`);
   
   // Zkopírovat inline styly z <use> nebo parent <svg> (fill, stroke, atd.)
   const useStyles = window.getComputedStyle(useElement);
@@ -1827,12 +1831,15 @@ svgMutationObserver.observe(document.body, {
   subtree: true
 });
 
-console.log('svag extension loaded - enhanced SVG detection v1.1.6');
+console.log('svag extension loaded - enhanced SVG detection v1.1.7');
 console.log('Supported SVG types: inline, img, data-uri, object, embed, background, sprite, mask, clip-path, pseudo-elements, picture, iframe, css-cursor, css-list-style, css-border-image, css-filter, css-shape-outside, foreign-object, shadow-dom, use-resolved');
 console.log('MutationObserver: active - tracking dynamic SVG additions');
-console.log('🔧 KRITICKÁ OPRAVA v1.1.6:');
-console.log('  ✅ Aplikace computed styles místo CSS tříd z externích stylesheets');
-console.log('  ✅ Odstranění class atributů (už nejsou potřeba)');
-console.log('  ✅ Inline styles: fill, stroke, opacity, strokeWidth, atd.');
-console.log('  ✅ SVG nyní plně samostatné bez závislostí na externím CSS!');
+console.log('🚀 SVG PATH COMPILER v1.1.7:');
+console.log('  ✅ Kompiluje ČISTÝ SVG přímo z shape elementů (path, circle, rect, atd.)');
+console.log('  ✅ Kopíruje atributy PŘÍMO z elementů (d, fill, stroke, atd.)');
+console.log('  ✅ Žádné CSS třídy - nikdy se nekopírují');
+console.log('  ✅ Fallback na computed styles pouze pokud atribut chybí');
+console.log('  ✅ Rekurzivní kompilace <g> groups');
+console.log('  ✅ Oprava dvojitého ## v atributech');
+console.log('  🎯 Výsledek: Čistý, validní, samostatný SVG bez závislostí!');
 
