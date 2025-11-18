@@ -1685,6 +1685,12 @@ async function sendToGallery(cleanData, element) {
       } else if (response && response.success) {
         console.log('[svag v1.2.0] sendToGallery: Úspěšně uloženo do galerie');
         showNotification('saved to gallery', popupPosition);
+      } else if (response && response.status === 401) {
+        // Token není validní nebo uživatel není přihlášen
+        console.error('[svag v1.2.0] Gallery API error 401: Unauthorized - token invalid or user not logged in');
+        showNotification('not logged in - open extension popup', popupPosition);
+        // Automaticky otevřít popup pro přihlášení
+        chrome.runtime.sendMessage({ action: 'openPopup' });
       } else if (response && response.status === 400) {
         // Zkontrolovat, zda je to limit error
         if (response.error && response.error.error === 'Icon limit reached' && response.error.tier === 'free') {
