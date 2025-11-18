@@ -112,16 +112,25 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Nastavit API URL z storage nebo použít default
   if (result.apiUrl) {
     apiUrl = result.apiUrl;
-    console.log('✅ API URL from storage:', apiUrl);
+    console.log('📍 API URL from storage (raw):', apiUrl);
   } else {
     const apiUrlInput = document.getElementById('apiUrl');
     if (apiUrlInput && apiUrlInput.value) {
       apiUrl = apiUrlInput.value;
-      await chrome.storage.sync.set({ apiUrl: apiUrl });
-      console.log('✅ API URL from HTML input:', apiUrl);
+      console.log('📍 API URL from HTML input (raw):', apiUrl);
     } else {
       console.log('⚠️ Using default API URL:', apiUrl);
     }
+  }
+  
+  // ✅ Normalizovat API URL (odstranit www., zajistit https://)
+  apiUrl = apiUrl.replace(/^(https?:\/\/)?(www\.)?/, 'https://').replace(/\/$/, '');
+  console.log('✅ API URL (normalized):', apiUrl);
+  
+  // Uložit normalizovanou URL zpět do storage
+  if (apiUrl !== result.apiUrl) {
+    await chrome.storage.sync.set({ apiUrl: apiUrl });
+    console.log('💾 Saved normalized URL to storage');
   }
   
   if (result.apiToken && result.userEmail) {

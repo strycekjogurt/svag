@@ -20,11 +20,21 @@ const app = express();
 
 // CORS konfigurace - povolit všechny originy (pro Chrome extension)
 app.use(cors({
-  origin: '*',
+  origin: true,  // ✅ Změna: podporuje jakýkoli origin včetně chrome-extension://
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: false
+  exposedHeaders: ['Authorization'],  // ✅ Přidáno
+  credentials: true  // ✅ Změna: povolit credentials
 }));
+
+// Explicitní OPTIONS pre-flight handler pro všechny API routes
+app.options('/api/*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.sendStatus(204);
+});
 
 app.use(express.json({ limit: '10mb' }));
 
