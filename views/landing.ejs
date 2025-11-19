@@ -98,7 +98,7 @@
 
     <section class="changelog-section">
       <h2 class="changelog-title">Change log</h2>
-      
+      <div class="version-container"> 
       <div class="changelog-content">
         <div class="changelog-description">
           <p class="changelog-text">svag is able to download 99% of svg files from web. It can work with almost every svg entry style in the code.</p>
@@ -108,9 +108,9 @@
             <span class="changelog-meta">19 Nov 2025</span>
           </div>
         </div>
-      </div>
-
-      <div class="changelog-grid">
+        </div>
+        <h3>Examples of what svag can detect and download</h3>
+        <div class="changelog-grid">
         <!-- Item 1 -->
         <div class="changelog-item">
           <div class="changelog-item-title">Inline SVG in button - direct path</div>
@@ -310,6 +310,7 @@
 <span class="syntax-tag">&lt;/svg&gt;</span></div>
         </div>
 
+        </div>
       </div>
     </section>
   </div>
@@ -433,11 +434,12 @@
         const underline = document.createElement('span');
         underline.style.cssText = `
           position: absolute;
-          bottom: 0;
+          bottom: -2px;
           left: 0;
-          width: 0%;
+          width: 100%;
           height: 1px;
           background: currentColor;
+          opacity: 0.8;
         `;
         
         // Nastavení relative position pro link
@@ -448,16 +450,17 @@
         // GSAP animace
         link.addEventListener('mouseenter', () => {
           gsap.to(underline, {
-            width: '100%',
+            width: '0%',
             duration: 0.2,
             ease: 'power2.out'
+            
             
           });
         });
         
         link.addEventListener('mouseleave', () => {
           gsap.to(underline, {
-            width: '0%',
+            width: '100%',
             duration: 0.2,
             ease: 'power2.in'
             
@@ -470,10 +473,10 @@
       downloadBtn.forEach(btn => {
         btn.addEventListener('mouseenter', () => {
           gsap.to(btn, {
-            scale: 1.02,
-            y: -2,
-            duration: 0.3,
-            ease: 'power2.out'
+            scale: 1.05,
+            y: -1,
+            duration: 0.2,
+            ease: 'power2.in'
           });
         });
         
@@ -481,7 +484,7 @@
           gsap.to(btn, {
             scale: 1,
             y: 0,
-            duration: 0.3,
+            duration: 0.2,
             ease: 'power2.out'
           });
         });

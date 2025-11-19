@@ -142,6 +142,8 @@ body {
   font-weight: 400;
   color: rgba(0, 0, 0, 0.98);
   text-decoration: none;
+  width: auto !important; /* Přidáno: zajistí že link nebere celou šířku */
+  display: inline-block; /* Přidáno: zajistí že má jen šířku obsahu */
 }
 
 .step.primary {
@@ -182,7 +184,7 @@ body {
 }
 
 .changelog-title {
-  font-size: 72px;
+  font-size: 56px; /* Změněno z 72px */
   font-weight: 700;
   line-height: 1;
   letter-spacing: -0.72px;
@@ -194,7 +196,17 @@ body {
   display: flex;
   flex-direction: column;
   gap: 48px;
-  margin-bottom: 120px;
+  margin-bottom: 48px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  padding-bottom: 48px;
+}
+
+.version-container {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 32px;
+  padding: 48px;
+  margin: 0 auto;
+  max-width: 1280px;
 }
 
 .changelog-description {
@@ -202,11 +214,11 @@ body {
 }
 
 .changelog-text {
-  font-size: 24px;
+  font-size: 32px; /* Změněno z 42px */
   font-weight: 700;
-  line-height: 32px;
+  line-height: 40px; /* Změněno z 48px */
   letter-spacing: -0.24px;
-  margin-bottom: 24px;
+  margin-bottom: 48px;
   color: rgba(0, 0, 0, 0.98);
 }
 
@@ -232,8 +244,16 @@ body {
 .changelog-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 82px 96px;
+  gap: 48px 96px;
   width: 100%;
+}
+.changelog-section h3 {
+  font-size: 16px; /* Změněno z 18px */
+  font-weight: 700;
+  line-height: 24px;
+  letter-spacing: -0.24px;
+  margin-bottom: 48px;
+  color: rgba(0, 0, 0, 0.98);
 }
 
 .changelog-item {
@@ -243,14 +263,14 @@ body {
 }
 
 .changelog-item-title {
-  font-size: 16px;
+  font-size: 14px; /* Změněno z 16px */
   font-weight: 700;
   color: rgba(0, 0, 0, 0.98);
 }
 
 .changelog-item-code {
   font-family: 'Inter', sans-serif;
-  font-size: 14px;
+  font-size: 13px; /* Změněno z 14px */
   line-height: 1.4;
   color: rgba(0, 0, 0, 0.5);
   white-space: pre-wrap;
@@ -317,20 +337,26 @@ body {
 
   .installation-steps {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 20px;
+    align-items: center;
+    gap: 24px;
   }
 
   .step {
-    width: 100%;
+    width: auto; /* Změněno z 100% - důležité! */
   }
 
   .step.download-btn {
     text-align: center;
+    width: 100%; /* Přidáno: pouze download button má mít celou šířku */
   }
 
   .changelog-title {
-    font-size: 48px;
+    font-size: 40px; /* Změněno z 48px */
+  }
+  
+  .changelog-text {
+    font-size: 28px; /* Přidáno */
+    line-height: 36px; /* Přidáno */
   }
   
   .changelog-grid {
@@ -354,8 +380,24 @@ body {
   }
 
   .installation-box {
+    align-items: center;
     border-radius: 24px;
     padding: 24px;
+  }
+
+  .installation-steps {
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+  }
+  
+  .changelog-title {
+    font-size: 36px; /* Přidáno */
+  }
+  
+  .changelog-text {
+    font-size: 24px; /* Přidáno */
+    line-height: 32px; /* Přidáno */
   }
 }
 
@@ -370,6 +412,15 @@ body {
   }
   
   .changelog-title {
-    font-size: 36px;
+    font-size: 32px; /* Změněno z 36px */
+  }
+  
+  .changelog-text {
+    font-size: 22px; /* Přidáno */
+    line-height: 30px; /* Přidáno */
+  }
+  
+  .version-container {
+    padding: 24px; /* Přidáno pro menší padding na mobilech */
   }
 }
