@@ -277,6 +277,21 @@ body {
   transition: color 0.2s ease;
 }
 
+.created-by {
+  font-size: 14px;
+  line-height: 14px;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.5);
+  text-align: center;
+  margin-top: 48px;
+}
+
+.created-by-link {
+  color: rgba(0, 0, 0, 0.98);
+  text-decoration: none;
+  font-weight: 500;
+}
+
 /* Syntax Highlighting */
 .syntax-tag,
 .syntax-attr,

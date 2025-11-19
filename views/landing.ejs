@@ -312,8 +312,13 @@
 
         </div>
       </div>
+      <div class="created-by">
+        <p>Created by <a class="created-by-link" href="https://www.linkedin.com/in/lukasvilkus/" target="_blank">luvi</a></p>
+      </div>
     </section>
+   
   </div>
+ 
   <script>
     function openChromeExtensions(event) {
       if (event) event.preventDefault();
@@ -427,7 +432,7 @@
     document.addEventListener('DOMContentLoaded', function() {
       
       // Underline animace pro linky
-      const allLinks = gsap.utils.toArray('.badge-text a, .changelog-link, .step.link');
+      const allLinks = gsap.utils.toArray('.badge-text a, .changelog-link, .step.link, .created-by-link');
       
       allLinks.forEach(link => {
         // Vytvoření underline elementu
