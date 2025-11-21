@@ -39,6 +39,7 @@ zip -r "$OUTPUT_FILE" \
   content.css \
   background.js \
   config.js \
+  jszip.min.js \
   icons/ \
   Gallery/gallery-sync.js \
   -x "*.DS_Store" \
