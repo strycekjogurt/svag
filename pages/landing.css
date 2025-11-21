@@ -182,6 +182,9 @@ body {
   padding: 0px 0 120px;
   max-width: 1280px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
 }
 
 .changelog-title {
@@ -208,6 +211,7 @@ body {
   padding: 48px;
   margin: 0 auto;
   max-width: 1280px;
+  width: 100%;
 }
 
 .changelog-description {
